@@ -1,6 +1,6 @@
 # backstage-essentials-toolkit
 
-A reusable toolkit for building Thinkific courses from plain text source files. Bundles documentation, Claude Code skills, and templates so a course author working on a Chromebook can go from blank repo to published course without reinventing the workflow each time. The toolkit is platform-agnostic at the content layer (markdown lessons, YAML quizzes) and targets Thinkific at the publishing layer.
+A reusable, subject-neutral toolkit for building courses from plain text source files. Bundles documentation, Claude Code skills, and templates so a course author working on a Chromebook can go from blank repo to published course without reinventing the workflow each time. The toolkit works for any subject (high school science, college, adult trade training, sports coaching, etc.) and any publishing target (Thinkific, Canvas, Google Classroom, static web, PDF). Voice is per-course, not toolkit-baked: each course writes its own voice guide and the lesson-drafter skill reads it at run time. Designed around a "verify don't think" model — skills generate drafts, humans review and revise.
 
 ## Status
 

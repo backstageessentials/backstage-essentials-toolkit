@@ -1,0 +1,11 @@
+final_assessment:
+  name: "{COURSE_NAME} Course Final"
+  total_questions_in_bank: 200
+  questions_per_attempt: 100
+  pass_threshold: 0.75
+  randomize: true
+  questions: []
+  # Populated later by the final-assessment-builder skill.
+  # Same question shape as knowledge-check.yaml, plus:
+  #   unit: N (which unit the question covers)
+  #   difficulty: easy | medium | hard

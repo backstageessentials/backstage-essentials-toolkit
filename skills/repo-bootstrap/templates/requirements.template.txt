@@ -1,0 +1,9 @@
+pyyaml>=6.0
+requests>=2.31
+markdown-it-py>=3.0
+python-dotenv>=1.0
+
+# Add platform-specific libraries below as needed.
+# google-api-python-client (for Google Classroom)
+# weasyprint (for PDF generation via WeasyPrint)
+# mkdocs (for static-web target)

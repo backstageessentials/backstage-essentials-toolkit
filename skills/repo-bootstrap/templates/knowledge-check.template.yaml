@@ -1,0 +1,17 @@
+quiz:
+  title: "Unit {N} Knowledge Check"
+  pass_threshold: 0.7
+  questions: []
+  # Populated later by the quiz-builder skill.
+  # Each question follows this shape:
+  #   - id: u{N}-kc-NN
+  #     type: scenario
+  #     question: |
+  #       Scenario question text.
+  #     choices:
+  #       - text: "Option A"
+  #         correct: true
+  #       - text: "Option B"
+  #         correct: false
+  #     explanation: |
+  #       Why A is right.

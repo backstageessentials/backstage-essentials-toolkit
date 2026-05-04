@@ -1,0 +1,14 @@
+course:
+  name: "{COURSE_NAME}"
+  slug: "{COURSE_SLUG}"
+  description_path: "./course-description.md"
+  voice_guide_path: "./voice-guide.md"
+  build_spec_path: "./docs/build-spec.md"
+  platform: "{TARGET_PLATFORM}"
+  completion_threshold: 0.75
+  units: {UNIT_COUNT}
+
+  # Optional fields, populated from course description if available
+  price_usd: {PRICE_OR_NULL}
+  duration_hours: {DURATION_OR_NULL}
+  language: "{LANGUAGE_OR_DEFAULT}"

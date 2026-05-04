@@ -1,0 +1,9 @@
+unit:
+  number: {N}
+  title: "{UNIT_TITLE}"
+  description: ""
+  learning_outcomes: []
+  # Example outcomes (Bloom's verbs):
+  #   - "Demonstrate proper [skill] in [context]."
+  #   - "Identify and explain [concept]."
+  #   - "Apply [principle] to a real situation."

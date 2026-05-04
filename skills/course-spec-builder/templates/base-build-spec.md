@@ -286,7 +286,15 @@ visual_aids:
       - lesson: "05-traffic-patterns.md"
         type: flowchart
         purpose: "Show day phases and the seams between them"
-    microsims: []
+    microsims:
+      - lesson: "02-ppe-what-to-wear-when.md"
+        type: flashcards
+        file: "ppe-flashcards.html"
+        purpose: "Cycle through the five PPE pieces and recall when each is needed"
+      - lesson: "03-lifting-without-hurting-yourself.md"
+        type: decision-tree
+        file: "should-i-lift.html"
+        purpose: "Walk down the lift decision: wheels, weight, team or solo"
   unit_2:
     diagrams: []
     microsims: []
@@ -296,11 +304,15 @@ visual_aids:
 Conventions:
 - Diagram entries name the lesson file, the Mermaid type, and a one-line
   purpose. The diagram-builder skill writes here when it adds a diagram.
-- MicroSim entries name the lesson, the template (signal-flow,
-  calculator, flashcards, etc.), and the iframe target file.
+- MicroSim entries name the lesson, the template type (one of
+  `signal-flow`, `calculator`, `flashcards`, `decision-tree`,
+  `timeline`, `matcher`, `formula`), the iframe target file under the
+  unit's `microsims/` folder, and a one-line purpose. The
+  microsim-builder skill writes here when it adds a MicroSim.
 - An empty list means "this unit has no visuals planned yet," not "this
   unit is finalized without visuals." A finalized unit with intentionally
-  no visuals should say so explicitly: `diagrams: [intentionally none]`.
+  no visuals should say so explicitly: `diagrams: [intentionally none]`
+  and/or `microsims: [intentionally none]`.
 
 ## 8. What the Sync Script Does
 

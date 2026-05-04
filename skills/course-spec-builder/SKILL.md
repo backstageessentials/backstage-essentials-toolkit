@@ -153,3 +153,8 @@ The overlay files for non-thinkific platforms are stubs in Phase 2. They get fil
 - Phase 6: base build spec now includes Section 7.6 Visual Aids, a per-unit
   list of Mermaid diagrams and MicroSims. The diagram-builder and
   microsim-builder skills read and write this section.
+
+### 1.2 (2026-05-04)
+- Phase 7: Visual Aids template's `microsims:` list now has a worked
+  example with the seven supported template types and the
+  `lesson` / `type` / `file` / `purpose` field convention.

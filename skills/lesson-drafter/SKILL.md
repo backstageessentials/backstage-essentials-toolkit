@@ -94,16 +94,41 @@ Do NOT use this skill if:
    to add diagrams to existing lessons (`bes add-diagrams`), so when in
    doubt, leave it out and let the human decide.
 
-10. Write the lesson markdown file:
+10. Consider whether a MicroSim would teach a concept in this lesson better
+    than text or a diagram. A MicroSim earns its place when the student
+    learns by *manipulating*: clicking flashcards, dragging signal-flow
+    chips, scrubbing a timeline, sliding values into a formula. If yes,
+    do NOT generate the MicroSim here; the lesson-drafter does not write
+    HTML widgets. Instead, mark the slot in the lesson markdown so the
+    microsim-builder skill (Phase 7) can fill it in later:
+
+    ```
+    {{microsim: TODO type=flashcards purpose="Cycle through the four
+    methods and recall when each fits."}}
+    ```
+
+    The `TODO` filename signals the slot is unfilled. The `type=` is one
+    of `signal-flow`, `calculator`, `flashcards`, `decision-tree`,
+    `timeline`, `matcher`, `formula`. The `purpose=` line is one
+    sentence describing what the MicroSim should teach. Place the slot
+    under the section where the concept lives, with one sentence of
+    prose introducing it.
+
+    Most lessons need zero MicroSims; one is the upper bound. When in
+    doubt, leave the slot out and let the human decide later via
+    `bes add-microsim`.
+
+11. Write the lesson markdown file:
    - File path: `content/unit-NN-{unit-slug}/lessons/{lesson-order}-{topic-slug}.md`
    - Frontmatter at the top with title, order, type, duration_minutes
    - Body content as the drafted lesson
 
-11. Show the user a summary:
+12. Show the user a summary:
     - Lesson title
     - File path created
     - Word count
     - Whether a diagram was included (and what type)
+    - Whether a MicroSim slot was marked (and what type)
     - Suggested next step: read the draft, revise, then commit
 
 ## Output Format
@@ -201,6 +226,8 @@ Before declaring the lesson drafted, verify:
 
 - **Forcing a diagram into every lesson.** Most lessons do not need one. A diagram earns its place by teaching a structure prose cannot teach as cleanly: branching decisions, cross-actor exchanges, lifecycles. A bulleted list dressed up as boxes-and-arrows is worse than the original list. If unsure, leave it out and let the diagram-builder skill decide later.
 
+- **Writing the MicroSim, not just marking the slot.** The lesson-drafter never writes HTML widgets. A MicroSim slot is a `{{microsim: TODO type=... purpose="..."}}` placeholder. The microsim-builder skill (run later) reads the slot, picks the right template, customizes the labels in the lesson's voice, and fills in the iframe. The lesson-drafter's job ends at marking the slot.
+
 ## Files in This Skill Folder
 
 - `SKILL.md` (this file)
@@ -220,3 +247,10 @@ Before declaring the lesson drafted, verify:
   skill's patterns and syntax. Most lessons still get zero diagrams; this
   step exists so the easy wins do not have to wait for a separate
   diagram-builder pass.
+
+### 1.2 (2026-05-04)
+- Phase 7: lesson-drafter now considers whether a MicroSim would teach a
+  concept better by manipulation, and if so, marks a `{{microsim: TODO
+  type=... purpose=...}}` slot in the lesson body. The lesson-drafter does
+  not write the MicroSim itself; that is the microsim-builder skill's
+  job, run later via `bes add-microsim`.

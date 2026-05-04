@@ -1,0 +1,8 @@
+course:
+  name: "Backstage Essentials"
+  slug: "backstage-essentials"
+  description: "Self paced live event production course."
+  price_usd: 247
+  completion_threshold: 0.75
+  certificate: "course-completion"
+  units: 6

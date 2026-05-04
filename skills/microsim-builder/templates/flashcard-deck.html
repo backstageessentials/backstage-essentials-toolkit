@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flashcards</title>
+<style>
+  :root {
+    --brand: #D6006C;
+    --bg: #FFFFFF;
+    --text: #0A0A0A;
+    --muted: rgba(10, 10, 10, 0.6);
+    --rule: #eaeaea;
+    --soft: rgba(214, 0, 108, 0.06);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    line-height: 1.5; font-size: 16px;
+  }
+  .wrap { max-width: 540px; margin: 0 auto; padding: 24px 20px; }
+  h1 { color: var(--brand); font-size: 1.4rem; margin: 0 0 0.4em 0; }
+  .intro { color: var(--muted); margin: 0 0 1.4em 0; font-size: 0.95rem; }
+  .card-area { perspective: 1000px; min-height: 220px; margin-bottom: 1em; }
+  .card {
+    position: relative; width: 100%; min-height: 200px;
+    cursor: pointer; transition: transform 0.45s ease;
+    transform-style: preserve-3d;
+  }
+  .card.flipped { transform: rotateY(180deg); }
+  .face {
+    position: absolute; inset: 0; padding: 28px 24px;
+    border: 2px solid var(--brand); border-radius: 10px; background: var(--bg);
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    font-size: 1.15rem; font-weight: 600;
+  }
+  .face.back { transform: rotateY(180deg); background: var(--soft); font-weight: 500; }
+  .progress { color: var(--muted); font-size: 0.85rem; margin: 0.5em 0 1em 0; text-align: center; }
+  .controls { display: flex; gap: 8px; justify-content: center; margin-bottom: 0.8em; }
+  button {
+    flex: 1; max-width: 180px; padding: 10px 16px;
+    font-family: inherit; font-size: 0.95rem; font-weight: 600;
+    border-radius: 6px; cursor: pointer; transition: opacity 0.15s;
+  }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .got-it { background: var(--brand); color: white; border: 2px solid var(--brand); }
+  .missed { background: var(--bg); color: var(--brand); border: 2px solid var(--brand); }
+  .reset { background: var(--bg); color: var(--text); border: 1px solid var(--rule); }
+  .summary { padding: 18px; border: 1px solid var(--rule); border-radius: 8px; text-align: center; }
+  .summary .score { color: var(--brand); font-size: 1.2rem; font-weight: 700; margin-bottom: 0.4em; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="title"></h1>
+  <p class="intro" id="intro"></p>
+  <div id="deck">
+    <div class="card-area">
+      <div class="card" id="card">
+        <div class="face front" id="card-front"></div>
+        <div class="face back" id="card-back"></div>
+      </div>
+    </div>
+    <div class="progress" id="progress"></div>
+    <div class="controls">
+      <button class="missed" id="missed-btn">Missed</button>
+      <button class="got-it" id="got-btn">Got it</button>
+    </div>
+    <p class="intro" style="text-align:center; margin: 0;">Click the card to flip.</p>
+  </div>
+  <div id="summary" class="summary hidden">
+    <div class="score" id="score-text"></div>
+    <div id="done-text"></div>
+    <div style="margin-top: 14px;"><button class="reset" id="reset-btn">Run again</button></div>
+  </div>
+</div>
+<script>
+// <!-- CUSTOMIZE -->
+const CONFIG = {
+  title: "Flashcards",
+  intro: "Click a card to reveal the answer, then mark whether you got it.",
+  cards: [
+    { front: "Front of card 1", back: "Back of card 1." },
+    { front: "Front of card 2", back: "Back of card 2." },
+    { front: "Front of card 3", back: "Back of card 3." },
+    { front: "Front of card 4", back: "Back of card 4." },
+  ],
+  doneMessage: "You went through them all. Run again any time.",
+};
+// END CUSTOMIZE -->
+
+(function () {
+  const titleEl = document.getElementById("title");
+  const introEl = document.getElementById("intro");
+  const cardEl = document.getElementById("card");
+  const frontEl = document.getElementById("card-front");
+  const backEl = document.getElementById("card-back");
+  const progressEl = document.getElementById("progress");
+  const gotBtn = document.getElementById("got-btn");
+  const missedBtn = document.getElementById("missed-btn");
+  const deckEl = document.getElementById("deck");
+  const summaryEl = document.getElementById("summary");
+  const scoreEl = document.getElementById("score-text");
+  const doneEl = document.getElementById("done-text");
+  const resetBtn = document.getElementById("reset-btn");
+
+  let order = [];
+  let idx = 0;
+  let got = 0;
+  let missed = 0;
+
+  function render() {
+    titleEl.textContent = CONFIG.title;
+    introEl.textContent = CONFIG.intro;
+    if (idx >= order.length) {
+      deckEl.classList.add("hidden");
+      summaryEl.classList.remove("hidden");
+      scoreEl.textContent = "Got it: " + got + " / " + order.length;
+      doneEl.textContent = CONFIG.doneMessage;
+      return;
+    }
+    deckEl.classList.remove("hidden");
+    summaryEl.classList.add("hidden");
+    const card = CONFIG.cards[order[idx]];
+    frontEl.textContent = card.front;
+    backEl.textContent = card.back;
+    cardEl.classList.remove("flipped");
+    progressEl.textContent = "Card " + (idx + 1) + " of " + order.length;
+    gotBtn.disabled = true;
+    missedBtn.disabled = true;
+  }
+
+  function start() {
+    order = CONFIG.cards.map((_, i) => i);
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    idx = 0; got = 0; missed = 0;
+    render();
+  }
+
+  cardEl.addEventListener("click", function () {
+    cardEl.classList.toggle("flipped");
+    if (cardEl.classList.contains("flipped")) {
+      gotBtn.disabled = false;
+      missedBtn.disabled = false;
+    }
+  });
+  gotBtn.addEventListener("click", function () { got++; idx++; render(); });
+  missedBtn.addEventListener("click", function () { missed++; idx++; render(); });
+  resetBtn.addEventListener("click", start);
+
+  start();
+})();
+</script>
+</body>
+</html>

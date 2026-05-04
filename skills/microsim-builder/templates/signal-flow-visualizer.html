@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signal Flow</title>
+<style>
+  :root {
+    --brand: #D6006C;
+    --bg: #FFFFFF;
+    --text: #0A0A0A;
+    --muted: rgba(10, 10, 10, 0.6);
+    --rule: #eaeaea;
+    --soft: rgba(214, 0, 108, 0.06);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    line-height: 1.5; font-size: 16px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 24px 20px; }
+  h1 { color: var(--brand); font-size: 1.4rem; margin: 0 0 0.4em 0; }
+  .intro { color: var(--muted); margin: 0 0 1em 0; font-size: 0.95rem; }
+  #canvas-container { width: 100%; }
+  #canvas-container canvas { max-width: 100%; height: auto; display: block; }
+  .result-box {
+    margin-top: 0.8em; padding: 14px 18px; border-radius: 8px;
+    background: var(--soft); border-left: 3px solid var(--brand);
+    min-height: 1.5em;
+  }
+  .reset-row { margin-top: 0.6em; text-align: right; }
+  button {
+    font-family: inherit; padding: 6px 14px; border-radius: 6px;
+    background: var(--bg); color: var(--text); border: 1px solid var(--rule);
+    cursor: pointer; font-size: 0.9rem;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="title"></h1>
+  <p class="intro" id="intro"></p>
+  <div id="canvas-container"></div>
+  <div class="result-box" id="result-box">Drag a chip from the left onto a slot on the right.</div>
+  <div class="reset-row"><button id="reset-btn">Reset chips</button></div>
+</div>
+<script>
+// <!-- CUSTOMIZE -->
+const CONFIG = {
+  title: "Signal Flow",
+  intro: "Drag a source chip onto an output slot to see the path.",
+  inputs: [
+    { id: "in1", label: "Input 1" },
+    { id: "in2", label: "Input 2" },
+    { id: "in3", label: "Input 3" },
+  ],
+  outputs: [
+    { id: "out1", label: "Output A" },
+    { id: "out2", label: "Output B" },
+    { id: "out3", label: "Output C" },
+  ],
+  results: {
+    in1: { out1: "Input 1 routed to Output A.", out2: "Input 1 routed to Output B.", out3: "Input 1 routed to Output C." },
+    in2: { out1: "Input 2 routed to Output A.", out2: "Input 2 routed to Output B.", out3: "Input 2 routed to Output C." },
+    in3: { out1: "Input 3 routed to Output A.", out2: "Input 3 routed to Output B.", out3: "Input 3 routed to Output C." },
+  },
+};
+// END CUSTOMIZE -->
+
+document.getElementById("title").textContent = CONFIG.title;
+document.getElementById("intro").textContent = CONFIG.intro;
+const resultBox = document.getElementById("result-box");
+const resetBtn = document.getElementById("reset-btn");
+
+let chips = [];
+let slots = [];
+let active = null;
+let connection = null;
+let progress = 0;
+
+const W = 600, H = 360;
+const CHIP_W = 130, CHIP_H = 38;
+const SLOT_W = 130, SLOT_H = 38;
+
+function setup() {
+  const cnv = createCanvas(W, H);
+  cnv.parent("canvas-container");
+  buildChipsAndSlots();
+  textFont('system-ui, sans-serif');
+}
+
+function buildChipsAndSlots() {
+  chips = CONFIG.inputs.map(function (inp, i) {
+    const startX = 24;
+    const startY = 30 + i * (CHIP_H + 24);
+    return {
+      id: inp.id, label: inp.label,
+      x: startX, y: startY,
+      homeX: startX, homeY: startY,
+    };
+  });
+  slots = CONFIG.outputs.map(function (out, i) {
+    const x = W - SLOT_W - 24;
+    const y = 30 + i * (SLOT_H + 24);
+    return { id: out.id, label: out.label, x: x, y: y };
+  });
+}
+
+function draw() {
+  background('#FFFFFF');
+  if (connection) {
+    drawConnection(connection.chip, connection.slot, progress);
+    if (progress < 1) progress = Math.min(1, progress + 0.04);
+  }
+  slots.forEach(drawSlot);
+  chips.forEach(function (c) {
+    if (c !== active) drawChip(c);
+  });
+  if (active) drawChip(active);
+}
+
+function drawSlot(s) {
+  noFill();
+  stroke('#D6006C');
+  strokeWeight(2);
+  drawingContext.setLineDash([6, 4]);
+  rect(s.x, s.y, SLOT_W, SLOT_H, 6);
+  drawingContext.setLineDash([]);
+  noStroke();
+  fill('rgba(10,10,10,0.6)');
+  textAlign(CENTER, CENTER);
+  textSize(13);
+  text(s.label, s.x + SLOT_W / 2, s.y + SLOT_H / 2);
+}
+
+function drawChip(c) {
+  fill('#FFFFFF');
+  stroke('#D6006C');
+  strokeWeight(2);
+  rect(c.x, c.y, CHIP_W, CHIP_H, 6);
+  noStroke();
+  fill('#0A0A0A');
+  textAlign(CENTER, CENTER);
+  textSize(13);
+  text(c.label, c.x + CHIP_W / 2, c.y + CHIP_H / 2);
+}
+
+function drawConnection(chip, slot, p) {
+  const x1 = chip.x + CHIP_W / 2;
+  const y1 = chip.y + CHIP_H / 2;
+  const x2 = slot.x + SLOT_W / 2;
+  const y2 = slot.y + SLOT_H / 2;
+  stroke('#D6006C');
+  strokeWeight(3);
+  line(x1, y1, x1 + (x2 - x1) * p, y1 + (y2 - y1) * p);
+  if (p >= 1) {
+    fill('#D6006C');
+    noStroke();
+    circle(x2, y2, 10);
+  }
+}
+
+function mousePressed() {
+  for (let i = chips.length - 1; i >= 0; i--) {
+    const c = chips[i];
+    if (mouseX > c.x && mouseX < c.x + CHIP_W && mouseY > c.y && mouseY < c.y + CHIP_H) {
+      active = c;
+      chips.splice(i, 1);
+      chips.push(c);
+      return;
+    }
+  }
+}
+
+function mouseDragged() {
+  if (active) {
+    active.x = mouseX - CHIP_W / 2;
+    active.y = mouseY - CHIP_H / 2;
+  }
+}
+
+function mouseReleased() {
+  if (!active) return;
+  let landed = null;
+  for (const s of slots) {
+    if (active.x + CHIP_W / 2 > s.x && active.x + CHIP_W / 2 < s.x + SLOT_W
+        && active.y + CHIP_H / 2 > s.y && active.y + CHIP_H / 2 < s.y + SLOT_H) {
+      landed = s;
+      break;
+    }
+  }
+  if (landed) {
+    active.x = landed.x;
+    active.y = landed.y;
+    connection = { chip: active, slot: landed };
+    progress = 0;
+    const result = (CONFIG.results[active.id] || {})[landed.id];
+    resultBox.textContent = result || "(No result defined for this pairing.)";
+  } else {
+    active.x = active.homeX;
+    active.y = active.homeY;
+    connection = null;
+    resultBox.textContent = "Drag a chip from the left onto a slot on the right.";
+  }
+  active = null;
+}
+
+resetBtn.addEventListener("click", function () {
+  chips.forEach(function (c) { c.x = c.homeX; c.y = c.homeY; });
+  active = null;
+  connection = null;
+  progress = 0;
+  resultBox.textContent = "Drag a chip from the left onto a slot on the right.";
+});
+</script>
+</body>
+</html>

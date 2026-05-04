@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculator</title>
+<style>
+  :root {
+    --brand: #D6006C;
+    --bg: #FFFFFF;
+    --text: #0A0A0A;
+    --muted: rgba(10, 10, 10, 0.6);
+    --rule: #eaeaea;
+    --soft: rgba(214, 0, 108, 0.06);
+    --good: #2a7a44;
+    --bad: #c0392b;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    line-height: 1.5; font-size: 16px;
+  }
+  .wrap { max-width: 540px; margin: 0 auto; padding: 24px 20px; }
+  h1 { color: var(--brand); font-size: 1.4rem; margin: 0 0 0.4em 0; }
+  .intro { color: var(--muted); margin: 0 0 1.4em 0; font-size: 0.95rem; }
+  .input-row { margin-bottom: 1.2em; }
+  .input-row label {
+    display: block; margin-bottom: 0.3em; font-weight: 600; font-size: 0.95rem;
+  }
+  .value { color: var(--brand); font-weight: 700; }
+  input[type="range"] {
+    width: 100%; -webkit-appearance: none; appearance: none;
+    background: transparent; height: 28px; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px; background: var(--rule); border-radius: 3px;
+  }
+  input[type="range"]::-moz-range-track {
+    height: 6px; background: var(--rule); border-radius: 3px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 22px; height: 22px;
+    background: var(--brand); border-radius: 50%; margin-top: -8px;
+    border: 2px solid var(--bg);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px; background: var(--brand);
+    border-radius: 50%; border: 2px solid var(--bg);
+  }
+  .output {
+    background: var(--soft); border: 1px solid var(--brand); border-radius: 8px;
+    padding: 18px; margin-top: 0.6em;
+  }
+  .output .label { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.3em; }
+  .output .number {
+    font-size: 2rem; font-weight: 800; color: var(--brand);
+  }
+  .threshold {
+    margin: 0.6em 0 0 0; font-size: 0.9rem; color: var(--muted);
+  }
+  .badge {
+    display: inline-block; margin-top: 0.8em; padding: 6px 14px;
+    border-radius: 999px; font-weight: 700; font-size: 0.9rem;
+  }
+  .badge.under { background: rgba(42, 122, 68, 0.12); color: var(--good); }
+  .badge.over { background: rgba(192, 57, 43, 0.12); color: var(--bad); }
+  .message { margin-top: 0.6em; font-size: 0.95rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="title"></h1>
+  <p class="intro" id="intro"></p>
+  <div id="inputs"></div>
+  <div class="output">
+    <div class="label" id="output-label"></div>
+    <div class="number" id="output-value"></div>
+    <div class="threshold" id="threshold-label"></div>
+    <span class="badge" id="status-badge"></span>
+    <div class="message" id="status-message"></div>
+  </div>
+</div>
+<script>
+// <!-- CUSTOMIZE -->
+const CONFIG = {
+  title: "Load Calculator",
+  intro: "Slide each input. The output and status update live.",
+  inputs: [
+    { id: "count", label: "Count", min: 1, max: 30, step: 1, defaultValue: 10, unit: "" },
+    { id: "watts", label: "Watts each", min: 50, max: 1000, step: 50, defaultValue: 200, unit: " W" },
+  ],
+  output: {
+    label: "Total load",
+    formula: function (vals) { return vals.count * vals.watts; },
+    unit: " W",
+    decimals: 0,
+  },
+  thresholdLabel: "Safe limit shown below",
+  threshold: 1920,
+  underMessage: "Under limit. Plug in.",
+  overMessage: "Over limit. Drop a unit or move to a second circuit.",
+};
+// END CUSTOMIZE -->
+
+(function () {
+  const titleEl = document.getElementById("title");
+  const introEl = document.getElementById("intro");
+  const inputsEl = document.getElementById("inputs");
+  const outputLabelEl = document.getElementById("output-label");
+  const outputValueEl = document.getElementById("output-value");
+  const thresholdLabelEl = document.getElementById("threshold-label");
+  const badgeEl = document.getElementById("status-badge");
+  const messageEl = document.getElementById("status-message");
+
+  titleEl.textContent = CONFIG.title;
+  introEl.textContent = CONFIG.intro;
+  outputLabelEl.textContent = CONFIG.output.label + ":";
+  thresholdLabelEl.textContent = CONFIG.thresholdLabel;
+
+  const sliders = {};
+
+  CONFIG.inputs.forEach(function (input) {
+    const row = document.createElement("div");
+    row.className = "input-row";
+    const label = document.createElement("label");
+    label.htmlFor = "slider-" + input.id;
+    const valueSpan = document.createElement("span");
+    valueSpan.className = "value";
+    valueSpan.id = "value-" + input.id;
+    label.textContent = input.label + ": ";
+    label.appendChild(valueSpan);
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.id = "slider-" + input.id;
+    slider.min = input.min;
+    slider.max = input.max;
+    slider.step = input.step;
+    slider.value = input.defaultValue;
+    sliders[input.id] = { slider: slider, valueSpan: valueSpan, unit: input.unit };
+    row.appendChild(label);
+    row.appendChild(slider);
+    inputsEl.appendChild(row);
+    slider.addEventListener("input", update);
+  });
+
+  function update() {
+    const vals = {};
+    for (const id in sliders) {
+      const v = parseFloat(sliders[id].slider.value);
+      vals[id] = v;
+      sliders[id].valueSpan.textContent = v + sliders[id].unit;
+    }
+    const result = CONFIG.output.formula(vals);
+    const decimals = CONFIG.output.decimals == null ? 0 : CONFIG.output.decimals;
+    const formatted = result.toLocaleString(undefined, {
+      minimumFractionDigits: decimals, maximumFractionDigits: decimals
+    });
+    outputValueEl.textContent = formatted + (CONFIG.output.unit || "");
+    if (result <= CONFIG.threshold) {
+      badgeEl.textContent = "Under capacity";
+      badgeEl.className = "badge under";
+      messageEl.textContent = CONFIG.underMessage;
+    } else {
+      badgeEl.textContent = "Over capacity";
+      badgeEl.className = "badge over";
+      messageEl.textContent = CONFIG.overMessage;
+    }
+  }
+
+  update();
+})();
+</script>
+</body>
+</html>

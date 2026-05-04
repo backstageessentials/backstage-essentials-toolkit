@@ -23,6 +23,7 @@ from .commands import new_quiz as new_quiz_cmd
 from .commands import build_final as build_final_cmd
 from .commands import build_course as build_course_cmd
 from .commands import add_diagrams as add_diagrams_cmd
+from .commands import add_microsim as add_microsim_cmd
 
 console = Console()
 
@@ -183,6 +184,31 @@ def add_diagrams(unit_number: int, max_diagrams_per_lesson: int,
         min_diagrams_per_lesson=min_diagrams_per_lesson,
         allowed_types=allowed_types,
         lesson_filter=lesson_filter,
+    ))
+
+
+@main.command(name="add-microsim")
+@click.option("--unit", "unit_number", default=None, type=int,
+              help="Unit number that owns the lesson.")
+@click.option("--lesson", "lesson_filename", default=None,
+              help='Lesson filename, e.g. "03-lifting-without-hurting-yourself.md".')
+@click.option("--type", "template_type", default=None,
+              type=click.Choice(["signal-flow", "calculator", "flashcards",
+                                  "decision-tree", "timeline", "matcher", "formula"]),
+              help="Template type to customize.")
+@click.option("--filename", "sim_filename", default=None,
+              help="Filename for the generated MicroSim HTML (default: derived from lesson).")
+@click.option("--height", default=400, type=int,
+              help="Iframe height in pixels (default: 400).")
+def add_microsim(unit_number: int, lesson_filename: str, template_type: str,
+                  sim_filename: str, height: int):
+    """Add an interactive MicroSim to a lesson via the microsim-builder skill."""
+    sys.exit(add_microsim_cmd.run(
+        unit_number=unit_number,
+        lesson_filename=lesson_filename,
+        template_type=template_type,
+        sim_filename=sim_filename,
+        height=height,
     ))
 
 

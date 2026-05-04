@@ -15,6 +15,7 @@ Usage from Python:
 from __future__ import annotations
 
 import re
+import shutil
 from dataclasses import dataclass
 from html import escape as _esc
 from pathlib import Path
@@ -67,6 +68,58 @@ def _make_md() -> MarkdownIt:
 
 
 _HEADING_DEMOTION = {"h1": "h3", "h2": "h4", "h3": "h5", "h4": "h6", "h5": "h6", "h6": "h6"}
+
+# {{microsim: filename.html height=400}} or {{microsim: TODO type=flashcards purpose="..."}}
+_MICROSIM_RE = re.compile(r"\{\{microsim:\s*([^\s}]+)([^}]*)\}\}")
+
+
+def _parse_microsim_attrs(attr_str: str) -> dict[str, str]:
+    """Parse 'height=400 type=flashcards purpose="multi word"' into a dict."""
+    attrs: dict[str, str] = {}
+    pairs = re.findall(r'(\w+)=("([^"]*)"|(\S+))', attr_str)
+    for key, _full, quoted, plain in pairs:
+        attrs[key] = quoted if quoted else plain
+    return attrs
+
+
+def _expand_microsim_directives(text: str, unit_number: int) -> str:
+    """Replace {{microsim: ...}} markers in the markdown with raw HTML iframes
+    (or with a 'pending' badge for TODO slots).
+
+    Iframes resolve to ``unit-NN-microsims/{filename}`` relative to the rendered
+    HTML; the renderer copies the unit's ``microsims/`` folder there.
+    """
+    def replace(match: re.Match) -> str:
+        first = match.group(1).strip()
+        attrs = _parse_microsim_attrs(match.group(2))
+        if first.upper() == "TODO":
+            sim_type = attrs.get("type", "?")
+            purpose = attrs.get("purpose", "(no purpose given)")
+            return (
+                '<div class="microsim-todo" style="margin: 1.2em 0; padding: 14px 18px; '
+                'border: 1px dashed #D6006C; border-radius: 8px; '
+                'background: rgba(214,0,108,0.04); color: rgba(10,10,10,0.65);">'
+                f'<strong style="color:#D6006C;">MicroSim slot ({_esc(sim_type)}):</strong> '
+                f'{_esc(purpose)} <em>(unfilled; run bes add-microsim)</em>'
+                '</div>'
+            )
+        height = attrs.get("height", "400")
+        try:
+            int(height)
+        except ValueError:
+            height = "400"
+        src = f"unit-{unit_number:02d}-microsims/{first}"
+        return (
+            '<div class="microsim-frame" style="margin: 1.4em 0;">'
+            f'<iframe src="{_esc(src)}" '
+            f'height="{_esc(height)}" width="100%" '
+            'style="border: 1px solid #eaeaea; border-radius: 8px; display: block;" '
+            'loading="lazy" '
+            f'title="MicroSim: {_esc(first)}">'
+            '</iframe>'
+            '</div>'
+        )
+    return _MICROSIM_RE.sub(replace, text)
 
 
 def _render_with_mermaid(md: MarkdownIt, text: str, demote_headings: bool = True,
@@ -397,7 +450,8 @@ def render_unit_preview(unit_folder: Path, course_root: Optional[Path] = None) -
 
     lesson_sections: list[str] = []
     for lesson in unit.lessons:
-        body_html = _render_with_mermaid(md, lesson.body_markdown)
+        expanded = _expand_microsim_directives(lesson.body_markdown, unit.number)
+        body_html = _render_with_mermaid(md, expanded)
         lesson_sections.append(
             '<section class="lesson">\n'
             f"  <h3>{_esc(lesson.title)}</h3>\n"
@@ -476,5 +530,14 @@ def render_all_units(course_root: Path, output_dir: Path,
         out_path = output_dir / f"unit-{n:02d}-preview.html"
         out_path.write_text(html, encoding="utf-8")
         written.append(out_path)
+
+        # Copy this unit's microsims folder alongside the rendered HTML so
+        # iframe src="unit-NN-microsims/foo.html" resolves.
+        microsims_src = unit_folder / "microsims"
+        if microsims_src.exists() and microsims_src.is_dir():
+            microsims_dst = output_dir / f"unit-{n:02d}-microsims"
+            if microsims_dst.exists():
+                shutil.rmtree(microsims_dst)
+            shutil.copytree(microsims_src, microsims_dst)
 
     return written

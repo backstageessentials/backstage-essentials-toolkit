@@ -95,7 +95,7 @@ def run(unit_number: int = None,
     console.print("[cyan]Paste this prompt into Claude Code:[/cyan]")
     console.print()
     console.print("=" * 70)
-    console.print(prompt)
+    console.print(prompt, markup=False, highlight=False)
     console.print("=" * 70)
     console.print()
     console.print("[yellow]After Claude Code finishes, eyeball the preview HTML, revise any[/yellow]")

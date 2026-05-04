@@ -78,15 +78,32 @@ Do NOT use this skill if:
    - End with a one-sentence takeaway or transition
    - Stay within target_word_count plus or minus 20%
 
-9. Write the lesson markdown file:
+9. Consider whether a Mermaid diagram would help this lesson. A diagram earns
+   its place when the lesson describes:
+   - A process with branching decisions (flowchart)
+   - An interaction between two or more parties over time (sequence)
+   - A thing that lives in different states (state diagram)
+   - A small set of related entities where the relationships matter (class diagram)
+
+   If yes, include one Mermaid block at the appropriate spot in the lesson
+   body, with a one-sentence intro line ending in a colon above it. Follow
+   the patterns and syntax in `skills/diagram-builder/diagram-patterns.md`
+   and `skills/diagram-builder/mermaid-syntax-reference.md`. Most lessons
+   need zero or one diagram; do not force a diagram into a narrative or
+   single-concept lesson. The diagram-builder skill can also be run later
+   to add diagrams to existing lessons (`bes add-diagrams`), so when in
+   doubt, leave it out and let the human decide.
+
+10. Write the lesson markdown file:
    - File path: `content/unit-NN-{unit-slug}/lessons/{lesson-order}-{topic-slug}.md`
    - Frontmatter at the top with title, order, type, duration_minutes
    - Body content as the drafted lesson
 
-10. Show the user a summary:
+11. Show the user a summary:
     - Lesson title
     - File path created
     - Word count
+    - Whether a diagram was included (and what type)
     - Suggested next step: read the draft, revise, then commit
 
 ## Output Format
@@ -115,6 +132,11 @@ draft: true
 ## {Second major section}
 
 {More body content. Build on the first section, do not just restate it.}
+
+{Optional: a one-sentence intro ending in a colon, followed by a Mermaid
+diagram in a fenced ```mermaid``` block, when the section describes a
+process, lifecycle, or interaction that prose cannot teach as cleanly.
+See skills/diagram-builder/ for the patterns and syntax.}
 
 ## What this means for you
 
@@ -177,6 +199,8 @@ Before declaring the lesson drafted, verify:
 
 - **Mixing audiences.** A lesson aimed at 14-year-olds should not have college-level vocabulary because the lesson-drafter "could." The voice guide is the constraint.
 
+- **Forcing a diagram into every lesson.** Most lessons do not need one. A diagram earns its place by teaching a structure prose cannot teach as cleanly: branching decisions, cross-actor exchanges, lifecycles. A bulleted list dressed up as boxes-and-arrows is worse than the original list. If unsure, leave it out and let the diagram-builder skill decide later.
+
 ## Files in This Skill Folder
 
 - `SKILL.md` (this file)
@@ -189,3 +213,10 @@ Before declaring the lesson drafted, verify:
 - Initial version
 - Reads voice-guide.md and course-description.md from the course repo
 - Outputs draft lessons with `draft: true` flag in frontmatter
+
+### 1.1 (2026-05-04)
+- Phase 6: lesson-drafter now considers whether a Mermaid diagram fits the
+  lesson and embeds one inline when it does. References the diagram-builder
+  skill's patterns and syntax. Most lessons still get zero diagrams; this
+  step exists so the easy wins do not have to wait for a separate
+  diagram-builder pass.

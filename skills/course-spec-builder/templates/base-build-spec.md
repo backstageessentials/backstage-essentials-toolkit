@@ -264,6 +264,44 @@ final_assessment:
         Why B is right.
 ```
 
+## 7.6 Visual Aids
+
+Each unit may include visual aids alongside the lesson markdown. The two
+supported kinds are Mermaid diagrams (Phase 6) and MicroSims (Phase 7).
+Diagrams ship inline inside the lesson markdown as fenced ` ```mermaid `
+blocks; MicroSims ship as standalone HTML files in a `microsims/` folder
+beside the lessons and embed via iframe.
+
+This section is the planning record. Fill it in as the course evolves.
+Other skills (diagram-builder, microsim-builder) read this list to decide
+whether a unit is short on visuals.
+
+```yaml
+visual_aids:
+  unit_1:
+    diagrams:
+      - lesson: "03-lifting-without-hurting-yourself.md"
+        type: flowchart
+        purpose: "Decision flow: roll, lift solo, or call a team lift"
+      - lesson: "05-traffic-patterns.md"
+        type: flowchart
+        purpose: "Show day phases and the seams between them"
+    microsims: []
+  unit_2:
+    diagrams: []
+    microsims: []
+  # ... one block per unit ...
+```
+
+Conventions:
+- Diagram entries name the lesson file, the Mermaid type, and a one-line
+  purpose. The diagram-builder skill writes here when it adds a diagram.
+- MicroSim entries name the lesson, the template (signal-flow,
+  calculator, flashcards, etc.), and the iframe target file.
+- An empty list means "this unit has no visuals planned yet," not "this
+  unit is finalized without visuals." A finalized unit with intentionally
+  no visuals should say so explicitly: `diagrams: [intentionally none]`.
+
 ## 8. What the Sync Script Does
 
 scripts/sync.py is the worker. When you run it, it does this:

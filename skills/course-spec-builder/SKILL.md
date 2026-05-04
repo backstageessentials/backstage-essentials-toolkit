@@ -67,6 +67,7 @@ The build spec is a structured markdown document with these sections, in order:
 5. **Building the Folder Structure** (universal)
 6. **Repo Structure** (universal)
 7. **File Formats** (universal, but with platform-specific lesson and assessment formats)
+   - 7.6 **Visual Aids** (universal: per-unit list of diagrams and MicroSims; populated as the course evolves)
 8. **What the Sync Script Does** (universal)
 9. **Platform API Notes** (platform-specific overlay)
 10. **Daily Workflow Once Everything is Set Up** (universal, with platform-specific sync command)
@@ -147,3 +148,8 @@ The overlay files for non-thinkific platforms are stubs in Phase 2. They get fil
 - Initial version
 - Base template plus platform overlay architecture
 - Thinkific overlay populated; other platform overlays are stubs for Phase 4
+
+### 1.1 (2026-05-04)
+- Phase 6: base build spec now includes Section 7.6 Visual Aids, a per-unit
+  list of Mermaid diagrams and MicroSims. The diagram-builder and
+  microsim-builder skills read and write this section.

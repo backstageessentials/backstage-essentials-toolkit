@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+"""Direct entry point for bes.
+
+This script is here as a fallback in case `pip install -e .` isn't run.
+The normal install creates a bes script in the user's bin path automatically;
+this file lets you run bes directly from the toolkit folder if needed.
+"""
+
+import sys
+from pathlib import Path
+
+# Add the toolkit root to sys.path so 'bes' package imports work
+TOOLKIT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(TOOLKIT_ROOT))
+
+from bes.cli import main
+
+if __name__ == "__main__":
+    main()

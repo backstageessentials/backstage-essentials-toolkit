@@ -42,6 +42,10 @@ The bloom is the first thirty seconds. Coffee releases trapped CO2 the moment ho
 
 A 350-gram brew at 200F using 22g of beans is a 1:16 ratio, which is the standard pour-over starting point. Heavier ratio (more water per gram) makes a thinner cup. Lighter (less water) makes a stronger cup. Adjust by 1g of beans at a time, not by changing the water. Water is your control variable.
 
+Try a few ratios in the explorer:
+
+{{microsim: brew-ratio-explorer.html height=540}}
+
 Drawdown is the part where you stop pouring and the dripper finishes draining on its own. A drawdown longer than two minutes means the grind is too fine. Shorter than ninety seconds means too coarse. Coarsen up if the cup is bitter, fine down if it is sour.
 
 ## What this means for you

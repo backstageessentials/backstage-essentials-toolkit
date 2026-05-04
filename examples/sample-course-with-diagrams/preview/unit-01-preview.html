@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home Coffee Brewing Basics, Unit 1 Preview</title>
+  <style>
+:root {
+  --brand: #D6006C;
+  --bg: #FFFFFF;
+  --text: #0A0A0A;
+  --muted: rgba(10, 10, 10, 0.65);
+  --rule: #eaeaea;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+@media (min-width: 720px) {
+  .container { padding: 48px 32px; }
+}
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 1.6em 0 0.5em 0;
+}
+h1 {
+  font-size: 2rem;
+  color: var(--brand);
+  border-bottom: 1px solid var(--brand);
+  padding-bottom: 0.5em;
+  margin-top: 0;
+}
+h2 {
+  font-size: 1.5rem;
+  color: var(--brand);
+  margin-top: 2.2em;
+}
+h3 { font-size: 1.25rem; color: var(--text); }
+h4 { font-size: 1.05rem; color: var(--text); margin-top: 1.4em; }
+h5 { font-size: 1rem; color: var(--text); }
+h6 { font-size: 0.95rem; color: var(--muted); }
+p { margin: 0.8em 0; }
+.tagline {
+  font-size: 1.1rem;
+  color: var(--muted);
+  margin: 0.5em 0 2em 0;
+}
+a {
+  color: var(--brand);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+a:hover { text-decoration-thickness: 2px; }
+ul, ol { padding-left: 1.5em; }
+li { margin: 0.3em 0; }
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: rgba(214, 0, 108, 0.08);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-size: 0.92em;
+}
+pre {
+  background: #f6f6f6;
+  padding: 12px 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.9em;
+  line-height: 1.45;
+  margin: 1em 0;
+}
+pre code {
+  background: none;
+  padding: 0;
+  font-size: 1em;
+}
+blockquote {
+  border-left: 3px solid var(--brand);
+  margin: 1em 0;
+  padding: 0.2em 1em;
+  color: var(--muted);
+}
+.lesson {
+  margin-bottom: 2.5em;
+  padding-bottom: 1.5em;
+  border-bottom: 1px solid var(--rule);
+}
+.lesson:last-of-type {
+  border-bottom: none;
+  margin-bottom: 1em;
+}
+.mermaid {
+  margin: 1.5em auto;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  font-family: system-ui, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+}
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+details {
+  margin: 1em 0 0 0;
+  padding: 0.8em 1em;
+  background: rgba(214, 0, 108, 0.04);
+  border-left: 3px solid var(--brand);
+  border-radius: 0 4px 4px 0;
+}
+details summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--brand);
+  list-style: none;
+}
+details summary::-webkit-details-marker { display: none; }
+details summary::before {
+  content: "\25B6 ";
+  font-size: 0.8em;
+  margin-right: 4px;
+  display: inline-block;
+}
+details[open] summary::before { content: "\25BC "; }
+details > p:first-of-type { margin-top: 0.6em; }
+.question { font-weight: 600; margin: 0.5em 0 0.4em 0; }
+.choices { margin: 0.3em 0 0.6em 0; }
+.kc-list { padding-left: 1.6em; }
+.kc-list > li { margin-bottom: 1.8em; padding-left: 0.4em; }
+.kc-list > li::marker { font-weight: 800; color: var(--brand); }
+</style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Home Coffee Brewing Basics</h1>
+    <h2>Unit 1: Getting Started</h2>
+    <p class="tagline">A short course for someone who has been making coffee with whatever was on the counter and now wants to know what they are doing. By the end, the student can pick a brewing method that fits their morning, run the brew through cleanly, and read a bag of beans without bluffing.</p>
+
+    <h2>Lessons</h2>
+
+<section class="lesson">
+  <h3>Pick a Method</h3>
+<p>
+The right brewing method is the one that fits your morning. Time you have, gear you own, and how clean the cup needs to taste. Pick by those three. Skip the brand wars.</p>
+<h4>
+The Decision</h4>
+<p>
+Most home brewers pick a method by what is on the counter. That is fine until the counter changes. A better rule is to pick by what your morning needs.</p>
+<p>
+The method decision in one diagram:</p>
+<div class="mermaid">
+flowchart TD
+    A[Time to brew?] --> B{Under 5 min<br/>and want clean?}
+    B -->|Yes| C[Pour-over]
+    B -->|No| D{Want strong<br/>and small?}
+    D -->|Yes| E[Espresso]
+    D -->|No| F{Walking away<br/>while it brews?}
+    F -->|Yes| G[Drip machine]
+    F -->|No| H[French press]
+</div>
+<p>
+Pour-over is the default for a clean cup in five minutes or less. Espresso is right when you want concentrated coffee in a small volume and own a machine that can pull a real shot. Drip is right when you are doing other things at the same time. French press fits the mornings where you want body and you do not mind the brew sitting for four minutes.</p>
+<h4>
+How to Use the Rule</h4>
+<p>
+The rule is not a contract. Treat it as a starting point. If you wake up tired and the pour-over kettle is dirty, the drip machine is the better choice that day. The point of the diagram is not to lock you in. The point is to stop you from buying gear you do not need because somebody on the internet said pour-over is the only real way.</p>
+<p>
+Run through the diagram once a week for a month. After that you will have a default that fits your kitchen, and you will only revisit the rule when something changes.</p>
+<h4>
+What this means for you</h4>
+<p>
+You can pick a method without owning every piece of gear. The decision is short, and the answer changes when your morning changes.</p>
+<p>
+Buy one good thing, learn it, and add gear only when the morning asks for it.</p>
+</section>
+
+<section class="lesson">
+  <h3>The Brew</h3>
+<p>
+A pour-over takes four minutes once you know the order. The order matters because each step relies on the one before it. Skip a step and the cup goes flat or bitter or sour. The fix is mechanical: do the steps in order, on time.</p>
+<h4>
+The Sequence</h4>
+<p>
+The actors are you, the kettle, the dripper, and the carafe. Each speaks at the right moment. The diagram below tracks the conversation from grind to serve.</p>
+<p>
+The brew as an exchange between you and the gear:</p>
+<div class="mermaid">
+sequenceDiagram
+    participant Y as You
+    participant K as Kettle
+    participant D as Dripper
+    participant C as Carafe
+    Y->>K: Heat 350g water to 200F
+    Y->>D: Rinse filter, dump rinse water
+    Y->>D: Add 22g coarse-ground beans
+    K->>D: 50g pour, wet the bed
+    Note over D: Bloom 30 sec
+    K->>D: Pour to 200g, slow circles
+    K->>D: Pour to 350g at 1:45
+    D->>C: Drawdown 2:30 to 4:00
+    Y->>C: Swirl
+    C->>Y: Serve
+</div>
+<p>
+The bloom is the first thirty seconds. Coffee releases trapped CO2 the moment hot water hits it; pour all the water at once and the gas pushes the water back up out of the bed before it can extract anything. A short rest with just enough water to wet the grounds lets the gas escape, and the rest of the pour can do its job.</p>
+<h4>
+What the Numbers Mean</h4>
+<p>
+A 350-gram brew at 200F using 22g of beans is a 1:16 ratio, which is the standard pour-over starting point. Heavier ratio (more water per gram) makes a thinner cup. Lighter (less water) makes a stronger cup. Adjust by 1g of beans at a time, not by changing the water. Water is your control variable.</p>
+<p>
+Try a few ratios in the explorer:</p>
+<div class="microsim-frame" style="margin: 1.4em 0;"><iframe src="unit-01-microsims/brew-ratio-explorer.html" height="540" width="100%" style="border: 1px solid #eaeaea; border-radius: 8px; display: block;" loading="lazy" title="MicroSim: brew-ratio-explorer.html"></iframe></div>
+<p>
+Drawdown is the part where you stop pouring and the dripper finishes draining on its own. A drawdown longer than two minutes means the grind is too fine. Shorter than ninety seconds means too coarse. Coarsen up if the cup is bitter, fine down if it is sour.</p>
+<h4>
+What this means for you</h4>
+<p>
+A pour-over is a sequence, not a recipe. Hold the order, hold the times, and the cup is in your control.</p>
+<p>
+The next bag of beans you buy will tell you what to expect; the lesson on reading a bag is up next.</p>
+</section>
+
+<section class="lesson">
+  <h3>The Bean</h3>
+<p>
+A coffee bean lives through four states between the roaster and your cup. Each state has a window where it tastes best. Buy beans without knowing the windows and you are guessing why the cup is off.</p>
+<h4>
+The Four States</h4>
+<p>
+The bean's lifecycle, with the cue that triggers each transition:</p>
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> Roasted
+    Roasted --> Rested: 3 to 5 days off-roast
+    Rested --> Stale: 3 to 4 weeks open bag
+    Rested --> Ground: grinder runs
+    Ground --> Brewed: hot water hits
+    Stale --> [*]: compost
+    Brewed --> [*]: serve or pour out
+</div>
+<p>
+A bag fresh off the roaster smells like the roaster: smoky, intense, a little harsh. That is the Roasted state. Beans tasted at this stage often taste flat in the cup because the CO2 in the bean is fighting extraction. Rest the bag on the counter for three to five days. The smell softens and the flavors come forward. That is the Rested window, the four weeks where the bean tastes best.</p>
+<p>
+After about a month in an open bag, the oils on the surface turn rancid and the cup goes flat-and-papery. That is Stale. Stale beans still brew, they just do not taste like coffee should taste. Compost them or use them as a planter mulch.</p>
+<h4>
+When to Grind</h4>
+<p>
+Grinding is the transition that should happen as close to brewing as possible. Once a bean is ground, the surface area exposed to air is fifty times larger than the whole bean. Oxidation that took weeks on the whole bean now takes minutes on the grounds. A pre-ground bag bought at the grocery store is already most of the way to Stale before you open it.</p>
+<p>
+Buy whole beans. Grind for one brew at a time. The investment is one good grinder, used every morning, for years.</p>
+<h4>
+What this means for you</h4>
+<p>
+You can read a bag now. The roast date on the bag tells you which state the bean is in: just-roasted is Roasted, three to five days later is Rested, a month later is Stale.</p>
+<p>
+If the bag has no roast date, treat it as Stale on the day you bought it.</p>
+</section>
+
+    <h2>Unit 1 Knowledge Check</h2>
+    <p><em>No knowledge check questions yet.</em></p>
+
+  </div>
+  <script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'base',
+  themeVariables: {
+    primaryColor: '#FFFFFF',
+    primaryTextColor: '#0A0A0A',
+    primaryBorderColor: '#D6006C',
+    lineColor: '#0A0A0A',
+    tertiaryColor: '#F8F8F8',
+    fontFamily: 'system-ui, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif'
+  }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Formula Explorer</title>
+<style>
+  :root {
+    --brand: #D6006C;
+    --bg: #FFFFFF;
+    --text: #0A0A0A;
+    --muted: rgba(10, 10, 10, 0.6);
+    --rule: #eaeaea;
+    --soft: rgba(214, 0, 108, 0.06);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    line-height: 1.5; font-size: 16px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 24px 20px; }
+  h1 { color: var(--brand); font-size: 1.4rem; margin: 0 0 0.4em 0; }
+  .intro { color: var(--muted); margin: 0 0 1em 0; font-size: 0.95rem; }
+  #canvas-container { width: 100%; }
+  #canvas-container canvas { max-width: 100%; height: auto; display: block; }
+  .output {
+    background: var(--soft); border: 1px solid var(--brand); border-radius: 8px;
+    padding: 14px 18px; margin: 1em 0;
+  }
+  .output .label { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.2em; }
+  .output .number { font-size: 1.6rem; font-weight: 800; color: var(--brand); }
+  .annotation { font-size: 0.92rem; color: var(--muted); margin-top: 0.4em; }
+  .input-row { margin-bottom: 1em; }
+  .input-row label {
+    display: block; margin-bottom: 0.3em; font-weight: 600; font-size: 0.95rem;
+  }
+  .value { color: var(--brand); font-weight: 700; }
+  input[type="range"] {
+    width: 100%; -webkit-appearance: none; appearance: none;
+    background: transparent; height: 28px; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px; background: var(--rule); border-radius: 3px;
+  }
+  input[type="range"]::-moz-range-track {
+    height: 6px; background: var(--rule); border-radius: 3px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 22px; height: 22px;
+    background: var(--brand); border-radius: 50%; margin-top: -8px;
+    border: 2px solid var(--bg);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px; background: var(--brand);
+    border-radius: 50%; border: 2px solid var(--bg);
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="title"></h1>
+  <p class="intro" id="intro"></p>
+  <div id="canvas-container"></div>
+  <div class="output">
+    <div class="label" id="output-label"></div>
+    <div class="number" id="output-value"></div>
+    <div class="annotation" id="annotation"></div>
+  </div>
+  <div id="inputs"></div>
+</div>
+<script>
+// <!-- CUSTOMIZE -->
+const CONFIG = {
+  title: "Brew Ratio Explorer",
+  intro: "Move the sliders. The ratio and the curve update live.",
+  variables: [
+    { id: "water", label: "Water (g)", min: 100, max: 500, step: 10, defaultValue: 350 },
+    { id: "beans", label: "Beans (g)", min: 10, max: 50, step: 1, defaultValue: 22 },
+  ],
+  output: {
+    label: "Ratio (water : beans)",
+    formula: function (v) { return Math.round((v.water / v.beans) * 10) / 10; },
+    unit: " : 1",
+    decimals: 1,
+  },
+  annotation: "More water per gram of beans means a thinner cup. The starting point is around 16 : 1. The plot shows ratio across the water range at the current bean weight.",
+  plot: {
+    xVar: "water",
+    yLabel: "ratio",
+  },
+};
+// END CUSTOMIZE -->
+
+document.getElementById("title").textContent = CONFIG.title;
+document.getElementById("intro").textContent = CONFIG.intro;
+document.getElementById("output-label").textContent = CONFIG.output.label + ":";
+document.getElementById("annotation").textContent = CONFIG.annotation;
+const outputValueEl = document.getElementById("output-value");
+const inputsEl = document.getElementById("inputs");
+const sliders = {};
+let currentVals = {};
+
+CONFIG.variables.forEach(function (v) {
+  const row = document.createElement("div");
+  row.className = "input-row";
+  const label = document.createElement("label");
+  const valueSpan = document.createElement("span");
+  valueSpan.className = "value";
+  label.textContent = v.label + ": ";
+  label.appendChild(valueSpan);
+  const slider = document.createElement("input");
+  slider.type = "range";
+  slider.min = v.min;
+  slider.max = v.max;
+  slider.step = v.step;
+  slider.value = v.defaultValue;
+  sliders[v.id] = { slider: slider, valueSpan: valueSpan };
+  currentVals[v.id] = v.defaultValue;
+  row.appendChild(label);
+  row.appendChild(slider);
+  inputsEl.appendChild(row);
+  slider.addEventListener("input", function () {
+    currentVals[v.id] = parseFloat(slider.value);
+    valueSpan.textContent = currentVals[v.id];
+    updateOutput();
+  });
+  valueSpan.textContent = v.defaultValue;
+});
+
+function updateOutput() {
+  const result = CONFIG.output.formula(currentVals);
+  const decimals = CONFIG.output.decimals == null ? 0 : CONFIG.output.decimals;
+  outputValueEl.textContent = result.toLocaleString(undefined, {
+    minimumFractionDigits: decimals, maximumFractionDigits: decimals,
+  }) + (CONFIG.output.unit || "");
+}
+updateOutput();
+
+const W = 600, H = 220;
+const PAD_L = 50, PAD_R = 20, PAD_T = 20, PAD_B = 36;
+
+function setup() {
+  const cnv = createCanvas(W, H);
+  cnv.parent("canvas-container");
+  textFont('system-ui, sans-serif');
+}
+
+function draw() {
+  background('#FFFFFF');
+  const xVar = CONFIG.plot.xVar;
+  const xConfig = CONFIG.variables.find(function (v) { return v.id === xVar; });
+  if (!xConfig) return;
+
+  const samples = 60;
+  const ys = [];
+  for (let i = 0; i <= samples; i++) {
+    const xVal = xConfig.min + (xConfig.max - xConfig.min) * (i / samples);
+    const probeVals = Object.assign({}, currentVals);
+    probeVals[xVar] = xVal;
+    ys.push(CONFIG.output.formula(probeVals));
+  }
+  const yMin = Math.min.apply(null, ys);
+  const yMax = Math.max.apply(null, ys);
+  const yRange = yMax - yMin || 1;
+
+  stroke('#eaeaea');
+  strokeWeight(1);
+  line(PAD_L, PAD_T, PAD_L, H - PAD_B);
+  line(PAD_L, H - PAD_B, W - PAD_R, H - PAD_B);
+
+  noStroke();
+  fill('rgba(10,10,10,0.6)');
+  textSize(11);
+  textAlign(RIGHT, CENTER);
+  text(yMax.toFixed(0), PAD_L - 6, PAD_T + 4);
+  text(yMin.toFixed(0), PAD_L - 6, H - PAD_B - 4);
+  textAlign(LEFT, TOP);
+  text(xConfig.min, PAD_L, H - PAD_B + 4);
+  textAlign(RIGHT, TOP);
+  text(xConfig.max, W - PAD_R, H - PAD_B + 4);
+  textAlign(CENTER, TOP);
+  text(xConfig.label, (PAD_L + W - PAD_R) / 2, H - PAD_B + 18);
+
+  noFill();
+  stroke('#D6006C');
+  strokeWeight(2);
+  beginShape();
+  for (let i = 0; i <= samples; i++) {
+    const px = PAD_L + (i / samples) * (W - PAD_L - PAD_R);
+    const py = H - PAD_B - ((ys[i] - yMin) / yRange) * (H - PAD_T - PAD_B);
+    vertex(px, py);
+  }
+  endShape();
+
+  const curX = currentVals[xVar];
+  const cpx = PAD_L + ((curX - xConfig.min) / (xConfig.max - xConfig.min)) * (W - PAD_L - PAD_R);
+  const curY = CONFIG.output.formula(currentVals);
+  const cpy = H - PAD_B - ((curY - yMin) / yRange) * (H - PAD_T - PAD_B);
+  fill('#D6006C');
+  noStroke();
+  circle(cpx, cpy, 12);
+}
+</script>
+</body>
+</html>

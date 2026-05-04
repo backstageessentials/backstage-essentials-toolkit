@@ -40,7 +40,7 @@ Do NOT use this skill if:
 1. Verify required inputs:
    - `unit_number` is a positive integer
    - `lesson_topic` is a sentence, not a single word
-   - `learning_outcome` uses a Bloom's-taxonomy upper-level verb (apply, demonstrate, evaluate, design, troubleshoot, recommend, defend, build, calibrate, diagnose). Reject weak verbs (understand, know, learn, be aware of). If the user passes a weak verb, suggest a strong replacement and ask them to confirm.
+   - `learning_outcome` uses a Bloom's-taxonomy upper-level verb. Apply-level: apply, demonstrate, calculate, build, calibrate. Analyze-level: analyze, compare, contrast, contextualize, interpret, diagnose, troubleshoot, attribute. Evaluate-level: evaluate, critique, recommend, defend, argue, judge, weigh. Create-level: design, synthesize, compose, construct. Reject weak verbs (understand, know, learn, be aware of). If the user passes a weak verb, suggest a strong replacement and ask them to confirm. K-12 introductory and language courses may legitimately mix in Remember-level verbs (identify, name, recall) when memorization is the actual goal.
 
 2. Find the course root by walking up from cwd until course-config.yaml is found.
 

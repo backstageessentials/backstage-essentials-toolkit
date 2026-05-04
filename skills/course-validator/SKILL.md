@@ -153,8 +153,8 @@ Report broken or insecure links as errors.
 COURSE VALIDATION REPORT
 ========================
 
-Course: Backstage Essentials
-Path: /home/bill/Code/backstage-essentials-course
+Course: Sample Course
+Path: /home/student/Code/sample-course
 Date: 2026-05-04
 
 SUMMARY
@@ -165,17 +165,17 @@ Info:      12
 
 ERRORS
 ------
-1. Coverage: Course-level outcome "Trace an audio signal end to end and isolate the most likely failure point" is not covered by any lesson.
-   Suggested fix: Add a lesson on signal flow troubleshooting in Unit 3, or remove this outcome from course-description.md.
+1. Coverage: Course-level outcome "Argue, with evidence, why a colony chose to remain loyal or to rebel by 1776" is not covered by any lesson.
+   Suggested fix: Add a lesson that supports this outcome, or remove the outcome from course-description.md.
 
-2. Cross-reference: Question u5-q12 references lesson_ref "08-show-day-prep.md" but that file does not exist in unit-05.
+2. Cross-reference: Question u5-q12 references lesson_ref "08-late-stage-events.md" but that file does not exist in unit-05.
    Suggested fix: Update lesson_ref to a real lesson, or create the missing lesson.
 
 WARNINGS
 --------
-3. Voice (unit-01/lessons/02-the-call.md): Sentence 14 is 47 words long. Voice guide says max 30. Consider splitting.
-   Offending text: "When you take a call from a vendor and they..."
-4. Word count: unit-02/lessons/03-loading.md is 1450 words, target was 800. Consider trimming or splitting.
+3. Voice (unit-01/lessons/02-key-actors.md): Sentence 14 is 47 words long. Voice guide says max 30. Consider splitting.
+   Offending text: "When the delegates met they had to consider not only the political implications but also..."
+4. Word count: unit-02/lessons/03-major-events.md is 1450 words, target was 800. Consider trimming or splitting.
 ... [and so on]
 
 INFO
@@ -192,7 +192,7 @@ OVERALL: FAIL (2 errors at severity_threshold: warning)
 A more polished version of the terminal output. Saved to `docs/validation-report.md`.
 
 ```markdown
-# Validation Report: Backstage Essentials
+# Validation Report: Sample Course
 
 **Date:** 2026-05-04
 **Severity threshold:** warning
@@ -210,18 +210,18 @@ A more polished version of the terminal output. Saved to `docs/validation-report
 
 ### 1. Coverage gap: outcome not addressed by any lesson
 
-**Outcome:** "Trace an audio signal end to end and isolate the most likely failure point"
+**Outcome:** "Argue, with evidence, why a colony chose to remain loyal or to rebel by 1776"
 
 This outcome is listed in `course-description.md` but no lesson references it.
 
 **Suggested fix:**
-- Add a lesson on signal flow troubleshooting in Unit 3, or
+- Add a lesson supporting this outcome, or
 - Remove this outcome from `course-description.md`.
 
 ### 2. Broken cross-reference
 
 **Location:** `exam/course-final.yaml`, question `u5-q12`
-**Field:** `lesson_ref: "08-show-day-prep.md"`
+**Field:** `lesson_ref: "08-late-stage-events.md"`
 **Issue:** This file does not exist in `unit-05`.
 
 **Suggested fix:** Update `lesson_ref` to a real lesson, or create the missing lesson.

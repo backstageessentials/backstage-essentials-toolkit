@@ -82,27 +82,42 @@ Every outcome follows this shape:
 
 The verb is the most important part. Strong verbs produce assessable outcomes. Weak verbs produce mush.
 
-Strong verbs (Bloom's taxonomy upper levels): apply, demonstrate, evaluate, design, troubleshoot, recommend, defend, build, calibrate, diagnose.
+Strong verbs come from the upper levels of Bloom's taxonomy. Pick the verbs that fit your subject:
 
-Weak verbs to avoid: understand, know, learn, be aware of, appreciate, become familiar with.
+- **Technical and procedural courses** lean on Apply and Analyze: apply, demonstrate, calculate, build, calibrate, troubleshoot, diagnose, operate.
+- **Analytical and interpretive courses** (history, literature, social sciences) lean on Analyze and Evaluate: analyze, compare, contrast, contextualize, interpret, attribute, evaluate, critique, argue, defend, weigh, recommend.
+- **Creative and design courses** lean on Create: design, synthesize, compose, construct, develop.
+- **K-12 introductory and language courses** legitimately mix in Remember-level verbs (identify, name, recall) when memorization is the actual learning goal. Use them deliberately, not as a fallback for weak outcomes.
+
+Weak verbs to avoid: understand, know, learn, be aware of, appreciate, become familiar with. These are mental states, not observable outcomes, and produce no assessable test.
 
 The conditions or standard part anchors the outcome to something testable.
 
-Bad outcome:
+Bad outcome (technical course):
 
 > Students will understand audio signal flow.
 
-Good outcome:
+Good outcome (technical course):
 
 > After completing this course, the student can trace a signal from a microphone through a mixer to a powered speaker, identifying every gain stage and naming the most likely failure point at each stage.
 
 The bad version cannot be tested. "Did the student understand it?" has no answer. The good version produces a clear test: hand the student a system, watch them trace it, count what they get right.
 
+Bad outcome (history course):
+
+> Students will appreciate the causes of the American Revolution.
+
+Good outcome (history course):
+
+> After completing this unit, the student can argue, with at least three pieces of primary-source evidence, why a given colony chose to remain loyal or to rebel by 1776.
+
+Same structural rule applies. "Appreciate" is a feeling, not an observable outcome. "Argue with three pieces of evidence" produces a clear test: read what the student wrote, count the evidence, judge whether each piece is on point.
+
 How many outcomes is right? Five to twelve for a course. Fewer than five is probably not enough scope for a real course. More than twelve is probably too much for a student to actually master.
 
 Cluster outcomes by unit if you want, or list them as a flat list. Either works.
 
-Example outcome list for a Backstage Essentials course:
+Example outcome list for an adult-trade-training course (Backstage Essentials, live event production):
 
 ```yaml
 learning_outcomes:
@@ -118,6 +133,32 @@ learning_outcomes:
   - "Strike and pack a show floor in a way that protects equipment and respects the warehouse."
   - "Navigate hierarchy, communication norms, and unspoken rules well enough to be invited back for the next call."
 ```
+
+Example outcome list for a high school history course (US History, American Revolution unit):
+
+```yaml
+learning_outcomes:
+  - "Compare colonial life before and after the Seven Years War, citing at least three changes British policy introduced after 1763."
+  - "Interpret the colonial response to the Stamp Act, the Townshend Acts, and the Tea Act using primary sources from at least two perspectives."
+  - "Argue, with evidence, why a given colony chose to remain loyal or to rebel by 1776."
+  - "Contextualize the events at Lexington, Concord, and Bunker Hill within the broader breakdown of British colonial authority."
+  - "Evaluate the strategic significance of Saratoga and Yorktown, weighing the role of diplomacy alongside the role of arms."
+  - "Synthesize a short argument identifying the single most important cause of American independence and defending the choice against at least one alternative."
+```
+
+Example outcome list for an undergraduate science course (introductory geology):
+
+```yaml
+learning_outcomes:
+  - "Apply the Mohs scale to rank an unknown mineral against reference samples."
+  - "Compare igneous, sedimentary, and metamorphic rock formation in terms of source, process, and identifying features."
+  - "Interpret a stratigraphic column to reconstruct a sequence of geological events."
+  - "Evaluate competing hypotheses for a regional landscape feature using field evidence."
+  - "Calculate the rate of plate motion from radiometric and paleomagnetic data."
+  - "Diagnose the most likely formation history of a hand sample given hardness, streak, cleavage, and texture."
+```
+
+Same toolkit, three different subjects, three different verb mixes. The course's voice guide and the audience drive which verbs are right; the toolkit does not assume.
 
 ## What to Leave Out of the Course Description
 

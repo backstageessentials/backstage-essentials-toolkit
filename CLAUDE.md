@@ -71,16 +71,15 @@ Each skill reads voice and audience context from the course folder it runs in, s
 
 When working in a course folder:
 
-1. **Always read that course's `voice-guide.md`** before generating any content. It is the authoritative source for tone, register, sentence length, banned phrases, and lesson shape.
+1. **Always read that course's `voice-guide.md`** before generating any content. It is the authoritative source for tone, register, sentence length, banned phrases, and lesson shape. The toolkit is subject neutral and audience neutral; the course's voice guide tells you whether you are writing for adult professionals, high school students, undergraduates, hobbyists, or coaches.
 2. **Apply any rules from the course's own `CLAUDE.md`** in addition to the toolkit's CLAUDE.md. The course CLAUDE.md takes precedence on course specific rules; this file takes precedence on toolkit orchestration.
-3. **Default rules across all courses Bill writes**, unless the course's voice guide says otherwise:
+3. **Author defaults that bind only when no voice guide rule covers the case.** Treat these as Bill's personal toolkit defaults, not as universal toolkit rules. A course voice guide that says otherwise wins:
    - No em dashes, no en dashes, no hyphens used as separators in prose. Use commas, colons, periods.
-   - Casual, direct, peer to peer voice. Feynman influence: clarity, mechanism, real time thinking out loud.
    - Bottom line first sentence in every lesson.
    - Plain text questions only. No markdown styling inside question text.
    - Trim by default. Whichever version is shorter, use that one, unless the longer one is genuinely clearer.
 
-If the course voice guide conflicts with these defaults, the course voice guide wins.
+The casual, peer-to-peer, Feynman-style register that fits Bill's adult-trade work is **not** a toolkit default. If a course's voice guide calls for formal academic, K-12, narrative-historical, or any other register, write in that register. Do not import a working-tech voice into a high school history course.
 
 ## Validation Pattern
 

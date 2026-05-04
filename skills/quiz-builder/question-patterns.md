@@ -150,6 +150,39 @@ When it doesn't:
 - Beginner courses where students do not yet have the framework to compare
 - Topics where there is one correct answer regardless of context
 
+### Same Pattern, Humanities Subject
+
+The comparative shape is not specific to technical content. A history or literature course uses the same shape:
+
+```yaml
+- id: u4-kc-08
+  type: scenario
+  difficulty: hard
+  question: |
+    Two historians explain the colonial decision to declare independence in
+    1776. Historian A argues that the Coercive Acts of 1774 were the
+    decisive cause, since they collapsed the consent of the governed.
+    Historian B argues that the decisive cause was the Continental
+    Congress, since it gave the colonies a coordinating body capable
+    of independent action. Which argument better fits the evidence
+    presented in the lesson, and why?
+  choices:
+    - text: "Historian A. Without the Coercive Acts, the Continental Congress would not have convened."
+      correct: true
+    - text: "Historian B. Coordination, not grievance, is what turned protest into a state."
+      correct: false
+    - text: "Both are equally strong; the question cannot be resolved from the evidence."
+      correct: false
+  explanation: |
+    Historian A's argument is the stronger fit for the lesson's evidence.
+    The Coercive Acts triggered the First Continental Congress as a
+    direct response, so coordination followed grievance rather than
+    preceding it. Historian B's claim is plausible in isolation but
+    inverts the chronology shown in the primary sources. The "both
+    equally strong" choice is a hedge that does not engage with the
+    sequence the lesson establishes.
+```
+
 ## Multi-Step Scenario
 
 A scenario question that breaks into smaller pieces. Used sparingly because it gets long.
@@ -201,8 +234,9 @@ When it works:
 |--------------|-----------|
 | Trade / professional skills | Scenario |
 | K-12 academic | Recall + simple scenario |
-| College academic | Comparative + applied calculation |
+| College academic (sciences) | Comparative + applied calculation |
+| Humanities / history / literature | Comparative + interpretive scenario (analyze a passage, evaluate competing arguments, attribute a source) |
 | Coaching / performance | Scenario + multi-step scenario |
 | Reference / documentation | Recall |
 
-These are starting points. The voice guide and audience details from the course should refine them.
+These are starting points. The voice guide and audience details from the course should refine them. A humanities course built with the toolkit relies on the same scenario and comparative templates as a trade course; the content of the scenarios differs, the question shape does not.

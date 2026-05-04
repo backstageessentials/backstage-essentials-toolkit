@@ -6,64 +6,70 @@ Catalog of the seven templates with screenshots-in-prose, the customize block fi
 
 What the student sees: a canvas with three input chips on the left and three output slots on the right, connected by a dim gray path. Drag an input chip to a slot; the path between them lights up in brand magenta and a label appears showing what the input becomes when it reaches the output.
 
-Customize fields:
+Canonical Customize fields (subject neutral):
 
 ```javascript
 const CONFIG = {
-  title: "Audio Signal Flow",
-  intro: "Drag a source to an output to see the signal path.",
+  title: "Path Selector",
+  intro: "Drag a source to a target to see what happens at the connection.",
   inputs: [
-    { id: "mic", label: "Mic" },
-    { id: "wireless", label: "Wireless pack" },
-    { id: "playback", label: "Playback" },
+    { id: "input_a", label: "Source A" },
+    { id: "input_b", label: "Source B" },
+    { id: "input_c", label: "Source C" },
   ],
   outputs: [
-    { id: "mains", label: "Mains" },
-    { id: "monitors", label: "Monitor wedges" },
-    { id: "broadcast", label: "Broadcast feed" },
+    { id: "output_x", label: "Target X" },
+    { id: "output_y", label: "Target Y" },
+    { id: "output_z", label: "Target Z" },
   ],
   // result[input.id][output.id] = "what the student sees when this pairing connects"
   results: {
-    mic: { mains: "Vocal in the room.", monitors: "Vocal in the wedge.", broadcast: "Live to broadcast." },
-    wireless: { mains: "Wireless vocal in the room.", monitors: "Wireless in the wedge.", broadcast: "Wireless to broadcast." },
-    playback: { mains: "Walk-in music.", monitors: "Click track to performer.", broadcast: "Bumper music." },
+    input_a: { output_x: "Result text for A to X.", output_y: "Result text for A to Y.", output_z: "Result text for A to Z." },
+    input_b: { output_x: "Result text for B to X.", output_y: "Result text for B to Y.", output_z: "Result text for B to Z." },
+    input_c: { output_x: "Result text for C to X.", output_y: "Result text for C to Y.", output_z: "Result text for C to Z." },
   },
 };
 ```
 
-Worked example, live event tech course: title "Audio Signal Flow," inputs are mic / wireless / playback, outputs are mains / monitors / broadcast. The result text uses the test course's working-tech voice.
+Worked example, live event tech course: title "Audio Signal Flow," inputs are mic / wireless / playback, outputs are mains / monitors / broadcast.
 
-Worked example, sample coffee course: not a great fit. Coffee does not have a "signal" with branching paths.
+Worked example, biology course: title "Neural Pathways," inputs are sensory neuron / interneuron / motor neuron, outputs are reflex arc / brain stem / spinal cord. Same template, different domain.
+
+Worked example, civics course: title "How a Bill Becomes a Law," inputs are House bill / Senate bill / joint resolution, outputs are committee / floor vote / president's desk.
 
 ## circuit-load-calculator
 
-What the student sees: two sliders ("How many fixtures?" and "Watts per fixture"), a computed total ("Total watts: 1,920 W") and a status badge ("Under capacity" or "Over capacity"). The threshold and the labels come from the customize block.
+The template name reflects its first worked example, but the shape is general: two or more sliders feed a formula, the output number updates live, and a status badge flips when the result crosses a threshold.
 
-Customize fields:
+What the student sees: sliders for each input, a computed total, and a status badge ("Under capacity" or "Over capacity," or whatever pair of states fits the lesson). The threshold and the labels come from the customize block.
+
+Canonical Customize fields (subject neutral):
 
 ```javascript
 const CONFIG = {
-  title: "20A Circuit Load Calculator",
-  intro: "Slide to see how many fixtures a 20A circuit can carry.",
+  title: "Threshold Calculator",
+  intro: "Slide each input. The output and the status update live.",
   inputs: [
-    { id: "count", label: "Fixture count", min: 1, max: 30, step: 1, defaultValue: 10, unit: "" },
-    { id: "watts", label: "Watts per fixture", min: 50, max: 1000, step: 50, defaultValue: 200, unit: " W" },
+    { id: "input_a", label: "Input A", min: 1, max: 30, step: 1, defaultValue: 10, unit: "" },
+    { id: "input_b", label: "Input B", min: 50, max: 1000, step: 50, defaultValue: 200, unit: "" },
   ],
   output: {
-    label: "Total load",
-    formula: (vals) => vals.count * vals.watts,
-    unit: " W",
+    label: "Total",
+    formula: (vals) => vals.input_a * vals.input_b,
+    unit: "",
   },
-  thresholdLabel: "20A circuit at 120V tops out around 1,920 W safe",
+  thresholdLabel: "Safe limit shown below",
   threshold: 1920,
-  underMessage: "Under capacity. Plug in.",
-  overMessage: "Over capacity. Drop a fixture or move to a second circuit.",
+  underMessage: "Under the limit.",
+  overMessage: "Over the limit. Adjust an input.",
 };
 ```
 
-Worked example, live event tech course: as shown.
+Worked example, live event tech course: title "20A Circuit Load Calculator," inputs are fixture count and watts per fixture, threshold is 1,920 W.
 
-Worked example, sample coffee course: title "Brew Strength Calculator," sliders are "Bean weight (g)" and "Water weight (g)," output is the brew ratio, threshold is 1:16. Same template, different customize block.
+Worked example, sample coffee course: title "Brew Strength Calculator," inputs are bean weight and water weight, threshold is the 16-to-1 brew ratio.
+
+Worked example, history course: title "How Many Soldiers Can a Colony Field?", inputs are colony population and willingness rate, threshold is the army size needed for a regional campaign.
 
 ## flashcard-deck
 
@@ -130,93 +136,98 @@ Worked example, sample coffee course: title "Pick a Method," nodes for time-avai
 
 ## timeline-scrubber
 
-What the student sees: a horizontal timeline with stage markers (Load-In, Sound Check, Doors, Show, Strike). A scrubber knob the student drags. Below the timeline, a state panel shows what is happening at the scrubbed-to moment ("Forklifts moving through the loading dock" / "Crowd entering" / etc.).
+What the student sees: a horizontal timeline with stage markers, a scrubber knob the student drags, and a state panel below the timeline showing what is happening at the scrubbed-to moment.
 
-Customize fields:
+Canonical Customize fields (subject neutral):
 
 ```javascript
 const CONFIG = {
-  title: "Show Day Timeline",
-  intro: "Drag the scrubber to see what is happening on the floor.",
+  title: "Process Timeline",
+  intro: "Drag the scrubber or click a stage to see what is happening at each phase.",
   stages: [
-    { id: "load-in", label: "Load-In", durationMin: 180,
-      state: "Forklifts in the dock. Eyes up. Stop at corners." },
-    { id: "sound-check", label: "Sound Check", durationMin: 90,
-      state: "Mains live. Hearing protection in. Stay out of monitor world." },
-    { id: "doors", label: "Doors", durationMin: 30,
-      state: "House lights up. Crowd entering. Phone in pocket." },
-    { id: "show", label: "Show", durationMin: 120,
-      state: "Stage hot. Backstage corridors are working corridors only." },
-    { id: "strike", label: "Strike", durationMin: 90,
-      state: "Lights down. Cases out. Riggers in fall zones." },
+    { id: "stage_1", label: "Stage 1", durationMin: 60,
+      state: "What is happening during stage 1." },
+    { id: "stage_2", label: "Stage 2", durationMin: 60,
+      state: "What is happening during stage 2." },
+    { id: "stage_3", label: "Stage 3", durationMin: 60,
+      state: "What is happening during stage 3." },
   ],
 };
 ```
 
-Worked example, live event tech course: as shown.
+Worked example, history course: title "The War for Independence (1775 to 1783)," stages are Lexington / Saratoga / Valley Forge / Yorktown / Treaty of Paris, state text describes what is happening on each front and why each turning point matters.
 
-Worked example, sample coffee course: title "From Bean to Cup," stages are Roasted / Rested / Ground / Brewed, state text describes the bean at each stage.
+Worked example, live event tech course: title "Show Day Timeline," stages are Load-In / Sound Check / Doors / Show / Strike, state text describes the floor.
+
+Worked example, biology course: title "Photosynthesis Across the Day," stages are dawn / morning / midday / evening, state text describes what the leaf is doing.
+
+Worked example, sample coffee course: title "From Bean to Cup," stages are Roasted / Rested / Ground / Brewed.
 
 ## drag-and-drop-matcher
 
-What the student sees: two columns. Left column has cards with terms; right column has slots labeled with definitions. Drag a card from the left, drop it in a slot. Correct matches turn brand magenta and lock; wrong matches snap back. After all matches are made, a score summary shows up.
+What the student sees: two columns. Left column has cards with terms; right column has slots labeled with definitions. Drag a card from the left, drop it in a slot. Correct matches lock and turn brand magenta; wrong matches snap back. After all matches are made, a score summary shows up.
 
-Customize fields:
+Canonical Customize fields (subject neutral):
 
 ```javascript
 const CONFIG = {
-  title: "Match the Connector to the Job",
-  intro: "Drag each connector to where it belongs on the show floor.",
+  title: "Match Term to Definition",
+  intro: "Drag each term on the left to its matching definition on the right.",
   pairs: [
-    { term: "XLR", definition: "Microphone signal." },
-    { term: "NL4 (speakON)", definition: "Speaker signal." },
-    { term: "TRS 1/4 inch", definition: "Stereo or balanced line signal." },
-    { term: "powerCON", definition: "Mains power into a fixture." },
+    { term: "Term A", definition: "Definition that pairs with term A." },
+    { term: "Term B", definition: "Definition that pairs with term B." },
+    { term: "Term C", definition: "Definition that pairs with term C." },
+    { term: "Term D", definition: "Definition that pairs with term D." },
   ],
   doneMessage: "All matched. Wrong tries: {misses}.",
 };
 ```
 
-Worked example, live event tech course: as shown.
+Worked example, history course: title "Match the Founder to the Idea," pairs are Jefferson / Adams / Hamilton / Madison matched to authorship of key documents and arguments.
 
-Worked example, sample coffee course: title "Match the Method to the Morning," pairs are pour-over / espresso / drip / French press matched to morning scenarios.
+Worked example, biology course: title "Organelle to Function," pairs are nucleus / mitochondrion / ribosome / endoplasmic reticulum matched to their cellular roles.
+
+Worked example, live event tech course: title "Match the Connector to the Job," pairs are XLR / NL4 / TRS / powerCON matched to their signal types.
+
+Worked example, literature course: title "Literary Device to Definition," pairs are simile / metaphor / hyperbole / personification matched to definitions and short examples.
 
 ## formula-explorer
 
 What the student sees: a small canvas plot at the top, sliders below for each variable, a numeric output panel showing the result of the formula at the current slider values, and an annotation in prose ("Output rises with X, falls with Y").
 
-Customize fields:
+Canonical Customize fields (subject neutral):
 
 ```javascript
 const CONFIG = {
-  title: "Voltage Drop Explorer",
-  intro: "See how cable length and gauge change voltage drop on a feeder run.",
+  title: "Formula Explorer",
+  intro: "Move the sliders. The output and the curve update live.",
   variables: [
-    { id: "length", label: "Cable length (ft)", min: 10, max: 200, step: 10, defaultValue: 100 },
-    { id: "current", label: "Current (A)", min: 1, max: 40, step: 1, defaultValue: 20 },
-    { id: "gauge", label: "Wire gauge (AWG)", min: 6, max: 18, step: 2, defaultValue: 12 },
+    { id: "x", label: "X", min: 0, max: 100, step: 1, defaultValue: 50 },
+    { id: "k", label: "K", min: 1, max: 10, step: 1, defaultValue: 2 },
   ],
   output: {
-    label: "Voltage drop",
-    formula: (v) => {
-      // Simplified V_drop = 2 * I * R; R per 1000 ft from gauge
-      const ohmsPer1000ft = { 6: 0.395, 8: 0.628, 10: 0.999, 12: 1.588, 14: 2.525, 16: 4.016, 18: 6.385 };
-      const R = (ohmsPer1000ft[v.gauge] || 1.588) * (v.length / 1000);
-      return Math.round(2 * v.current * R * 100) / 100;
-    },
-    unit: " V",
+    label: "Output",
+    formula: (v) => v.x * v.k,
+    unit: "",
+    decimals: 0,
   },
-  annotation: "Heavier wire (lower AWG number) means less drop. Doubling the run doubles the drop.",
+  annotation: "Output rises with X and rises faster as K rises.",
   plot: {
-    xVar: "length",
-    yLabel: "V drop",
+    xVar: "x",
+    yLabel: "y",
   },
 };
 ```
 
-Worked example, live event tech course: as shown.
+Worked example, history course: title "How Many Soldiers Can a Colony Field?", variables are colony population and willingness rate, output is the number of available soldiers, plot shows soldiers vs. population at the current willingness rate.
 
-Worked example, sample coffee course: title "Brew Ratio Explorer," variables are bean weight and water weight, output is the ratio (1:N), plot shows ratio vs. water at fixed bean.
+Worked example, physics course: title "F = ma Explorer," variables are mass and acceleration, output is force in newtons.
+
+Worked example, finance course: title "Compound Interest Explorer," variables are principal, rate, and years, output is the final balance.
+
+Worked example, live event tech course: title "Voltage Drop Explorer," variables are cable length, current, and wire gauge, output is voltage drop in volts.
+
+Worked example, sample coffee course: title "Brew Ratio Explorer," variables are bean weight and water weight, output is the brew ratio.
 
 ## Picking Between Calculator and Formula
 

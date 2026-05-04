@@ -172,7 +172,7 @@ Inputs:
 
 The lesson covers the lift decision rule: roll, lift solo, or call a team. There is a numeric component (load weight, distance), so a calculator fits.
 
-The skill customizes circuit-load-calculator.html into a "Lift Cost Calculator": sliders for load weight (10-300 lbs) and walk distance (5-50 ft), output is the team-lift recommendation plus a back-strain index. UI labels are written in the test course's peer-to-peer working-tech voice.
+The skill customizes circuit-load-calculator.html into a "Lift Cost Calculator": sliders for load weight (10-300 lbs) and walk distance (5-50 ft), output is the team-lift recommendation plus a back-strain index. UI labels follow the test course's voice guide (a casual, peer-to-peer, working-tech register). A different course's UI labels would follow that course's voice guide.
 
 Output: `content/unit-01-safety-and-site-awareness/microsims/lift-decision-calculator.html` plus a `{{microsim: ...}}` directive inserted in the lesson under the "How to Lift Solo" section.
 
@@ -215,7 +215,7 @@ Before declaring the skill done, verify:
 
 - **Forcing a MicroSim into a lesson that does not need one.** Most lessons do not. The bar is "the student learns by manipulating." If reading the prose teaches the concept fully, skip.
 
-- **Off-voice UI text.** A button labeled "Submit your answer" in a lesson that uses peer-to-peer working-tech voice reads like a corporate training widget. Match the voice guide for every label.
+- **Off-voice UI text.** A button labeled "Submit your answer" in a lesson whose voice guide calls for casual, direct prose reads like a corporate training widget. A button labeled "Pick" in a lesson whose voice guide calls for formal academic register reads as flippant. Match the voice guide for every label.
 
 - **Customizing the machinery, not just the customize block.** The template machinery is shared. Edits there break the template for every other lesson. Stay inside the `<!-- CUSTOMIZE -->` block.
 

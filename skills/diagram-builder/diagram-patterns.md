@@ -42,9 +42,19 @@ Default direction: `TD` (top-down) for decisions, `LR` (left-right) for timeline
 
 ## Flowchart: Linear Pipeline
 
-Use when the lesson describes a sequence of stages, especially when the seams between stages matter (the typical "load-in to show to strike" shape).
+Use when the lesson describes a sequence of stages, especially when the seams between stages matter.
 
-Example:
+Example, from a lesson about how a bill becomes a law:
+
+```mermaid
+flowchart LR
+    A[Bill introduced] -->|committee approves| B((Committee<br/>markup))
+    B -->|reported out| C[Floor vote]
+    C -->|passes| D((Sent to<br/>other chamber))
+    D -->|both pass| E[President signs or vetoes]
+```
+
+A second example, from a live event production lesson, shows the same shape applied to show-day phases:
 
 ```mermaid
 flowchart LR
@@ -55,7 +65,8 @@ flowchart LR
 ```
 
 When it works:
-- Show-day phases, project lifecycle, ticket lifecycle
+- Legislative or procedural sequences, project lifecycles, ticket lifecycles
+- Show-day phases, manufacturing pipelines, narrative arcs
 - Anything where the transition between stages is itself part of the lesson
 
 When it does not:
@@ -124,7 +135,29 @@ The `[*]` syntax marks start and end states. Transitions get short labels for th
 
 Use sparingly. Most courses do not need class diagrams. Reach for one when the lesson describes a small set of related entities where the relationship matters.
 
-Example, from a lesson about live audio system structure:
+Example, from a lesson about the three branches of the US federal government:
+
+```mermaid
+classDiagram
+    class Legislature {
+        passes laws
+        controls budget
+    }
+    class Executive {
+        enforces laws
+        commands the military
+    }
+    class Judiciary {
+        interprets laws
+        reviews constitutionality
+    }
+    Legislature --> Executive: presents bills
+    Executive --> Legislature: vetoes or signs
+    Executive --> Judiciary: appoints judges
+    Judiciary --> Legislature: rules on statutes
+```
+
+A second example, from a live audio system lesson, shows the same shape applied to hardware topology:
 
 ```mermaid
 classDiagram
@@ -145,14 +178,16 @@ classDiagram
 
 When it works:
 - Hardware system topology
+- Branches of government, separation of powers
 - Database-style entity relationships in a software course
+- Ecosystem food webs, organelles in a cell, family trees
 - Org charts where the relationships matter
 
 When it does not:
 - Processes (use flowchart)
 - Conversations (use sequence)
 
-Most live event courses lean on flowcharts and sequence diagrams. Class diagrams come in for signal-flow-style lessons.
+Most courses lean on flowcharts and sequence diagrams; class diagrams suit lessons about structural relationships among entities, regardless of subject.
 
 ## Choosing Direction and Density
 

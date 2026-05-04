@@ -47,8 +47,13 @@ def run(unit_number: int = None, lesson_topic: str = None,
     if not lesson_topic:
         lesson_topic = click.prompt("Lesson topic (one sentence)", type=str)
     if not learning_outcome:
-        console.print("[cyan]Use a Bloom's verb: apply, demonstrate, evaluate, design, troubleshoot, recommend, etc.[/cyan]")
-        console.print("[cyan]Avoid weak verbs: understand, know, learn, be aware of.[/cyan]")
+        console.print("[cyan]Use a Bloom's verb that fits the course. Examples by level:[/cyan]")
+        console.print("[cyan]  Apply: apply, demonstrate, calculate, build, calibrate[/cyan]")
+        console.print("[cyan]  Analyze: analyze, compare, contextualize, interpret, diagnose, troubleshoot[/cyan]")
+        console.print("[cyan]  Evaluate: evaluate, critique, argue, defend, recommend, weigh[/cyan]")
+        console.print("[cyan]  Create: design, synthesize, compose, construct[/cyan]")
+        console.print("[cyan]Avoid weak verbs (understand, know, learn, be aware of) unless the goal[/cyan]")
+        console.print("[cyan]is genuine memorization, in which case use identify, name, or recall.[/cyan]")
         learning_outcome = click.prompt("Learning outcome", type=str)
 
     # Warn on weak verbs
@@ -59,7 +64,11 @@ def run(unit_number: int = None, lesson_topic: str = None,
             "[yellow]The learning outcome uses a weak verb. Continue anyway?[/yellow]",
             default=False,
         ):
-            console.print("Try a verb like: apply, demonstrate, evaluate, troubleshoot.")
+            console.print(
+                "Try a stronger verb. For technical or trade content: apply, demonstrate, "
+                "troubleshoot. For analytical or interpretive content: compare, interpret, "
+                "argue, evaluate. For memorization-driven K-12 content: identify, name, recall."
+            )
             return 0
 
     prompt = _build_new_lesson_prompt(

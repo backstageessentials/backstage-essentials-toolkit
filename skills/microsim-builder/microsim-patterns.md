@@ -25,8 +25,8 @@ The student does:
 
 Best fits:
 - Method-selection lessons (which brewing method, which fixture, which connector)
-- Vocabulary or terminology lessons
-- Identification lessons (this is a SM58, this is a 414, this is a U87)
+- Vocabulary or terminology lessons across any subject (literary devices, scientific terms, historical names, foreign-language words)
+- Identification lessons (this is a sonnet vs a haiku; this is sedimentary vs igneous; this is a stagehand-grade SM58 vs a U87)
 
 When it does not fit:
 - Lessons about decisions, not facts (use decision-tree)
@@ -45,6 +45,9 @@ Best fits:
 - "Should I lift this solo or call a team?" style decisions
 - Compliance flows ("when do I escalate?")
 - Troubleshooting flows ("the gear is not working, walk through the checks")
+- Argumentative or interpretive flows ("you are a delegate at the Continental Congress, what do you argue?")
+- Source-evaluation flows ("is this primary or secondary, and how do you know?")
+- Ethical decision frameworks ("what does this case study call for?")
 
 When it does not fit:
 - Lessons where the answer depends on a numeric value (use calculator)
@@ -62,7 +65,10 @@ The student does:
 Best fits:
 - Electrical load math (fixture watts, breaker amps)
 - Audio gain-staging math
-- Cost calculations
+- Cost calculations, finance problems (compound interest, loan payments)
+- Chemistry concentration and stoichiometry
+- Physics motion problems (speed, acceleration, kinetic energy)
+- Population math (how many soldiers can a colony field, how many votes are needed)
 - Speed/time/distance problems
 
 When it does not fit:
@@ -101,6 +107,9 @@ The student does:
 Best fits:
 - Audio signal flow (mic to stagebox to console to mains)
 - Lighting signal flow (console to node to fixture)
+- How a bill becomes a law (chamber to committee to floor to other chamber to president)
+- Neural pathway lessons (sensory neuron through interneuron to motor neuron)
+- Water cycle, supply chain, manufacturing pipeline
 - Material flow in any "input goes through stages and comes out as output" lesson
 
 When it does not fit:
@@ -118,7 +127,9 @@ The student does:
 
 Best fits:
 - Show day phases (load-in, sound check, doors, show, strike)
-- Lifecycles (the bean from roasted to brewed)
+- Lifecycles (the bean from roasted to brewed; cell division phases; star formation)
+- Historical chronologies (the war years, the Reconstruction era, the build-up to a revolution)
+- Narrative arcs in literature
 - Multi-step procedures where the student should see each step's effect
 
 When it does not fit:
@@ -138,8 +149,10 @@ The student does:
 
 Best fits:
 - Vocabulary lessons where definitions and terms can be confused
-- Role-and-responsibility lessons (FOH does X, monitor world does Y)
+- Role-and-responsibility lessons (FOH does X, monitor world does Y; or executive branch does X, legislative branch does Y)
 - Tool-and-job lessons (this gear is for this purpose)
+- Literary devices to definitions, historical figures to events, organelles to functions
+- Authors to works, primary sources to time periods, treaties to outcomes
 
 When it does not fit:
 - The lesson is recall-only with no pairing structure (use flashcards)
@@ -169,4 +182,4 @@ When two templates fit equally, pick the simpler one. The lesson is the teacher;
 
 - **A MicroSim that runs the lesson's whole arc.** One MicroSim, one focused practice. If the lesson covers three concepts, that is three MicroSims (and probably too many for one lesson).
 
-- **Voice mismatch in UI labels.** A button labeled "Continue your learning journey" in a lesson that uses peer-to-peer working-tech voice. The MicroSim feels grafted on. Match the voice every time.
+- **Voice mismatch in UI labels.** A button labeled "Continue your learning journey" in a lesson whose voice guide calls for short, casual, direct prose. Or "Submit answer" in a course whose voice guide calls for formal academic register. The MicroSim feels grafted on. Match the voice guide every time.

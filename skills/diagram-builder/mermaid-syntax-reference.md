@@ -162,33 +162,34 @@ Use sparingly. Pick this only for structural relationships among small sets of e
 
 ```mermaid
 classDiagram
-    class Mic
-    class Stagebox {
-        accepts XLR
-        outputs digital
+    class Author {
+        writes works
     }
-    class FOHConsole {
-        mixes channels
-        outputs to mains
+    class Work {
+        has title
+        has year
     }
-    class Mains
-    Mic --> Stagebox: XLR
-    Stagebox --> FOHConsole: digital snake
-    FOHConsole --> Mains: line out
+    class Publisher {
+        prints copies
+        distributes
+    }
+    Author --> Work: writes
+    Publisher --> Work: prints
+    Work --> Author: cites
 ```
 
-`class Foo` declares a class. The brace block lists its attributes. The arrow `A --> B: label` shows the relationship.
+`class Foo` declares a class. The brace block lists its attributes. The arrow `A --> B: label` shows the relationship. The same syntax fits any structural lesson: branches of government, parts of a cell, hardware in a signal chain.
 
 ### Relationship arrows
 
 | Syntax | Meaning |
 |--------|---------|
-| `A --> B` | A directly relates to B (default for hardware topology) |
+| `A --> B` | A directly relates to B (default for most structural relationships) |
 | `A --|> B` | A is a kind of B (inheritance, rare here) |
 | `A --o B` | A aggregates B |
 | `A --* B` | A composes B |
 
-For most live-event signal-flow uses, plain `-->` is enough. Reach for the typed arrows only if the lesson is specifically about kinds of relationships.
+For most directional structural relationships, plain `-->` is enough. Reach for the typed arrows only if the lesson is specifically about kinds of relationships.
 
 ## Theme Variables
 

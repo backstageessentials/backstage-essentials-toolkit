@@ -27,9 +27,17 @@ Specify:
 - Reading context (at a desk taking notes, on a phone during a commute, in a workshop with grease on their hands)
 - What they hope to gain (certification, skill, hobby enjoyment, job)
 
-Example for a Backstage Essentials live event course:
+Example for an adult-trade-training course (Backstage Essentials, live event production):
 
 > Adults, 18 to 45, high school education or higher, no live event experience required. They are working their first crew jobs or hoping to. They read on phones during downtime between shows or on laptops at home in the evening. They want to be hireable on real crews, not just learn theory.
+
+Example for a high school history course:
+
+> Students, 14 to 17, in a US history elective. Mixed reading levels but most are at grade 9 to 11. They read in class, on a Chromebook, during a 50-minute period, between two other subjects. They are not specialists. They want to pass the unit assessment and find the material interesting enough to keep paying attention. They respond to narrative structure and vivid scenes; they do not respond to abstract theory or textbook prose.
+
+Example for an undergraduate seminar:
+
+> Undergraduates in a 200-level course, ages 19 to 22, with at least one prior college course in the discipline. They read at home, in advance of a discussion-based class. They expect to be challenged with primary sources and competing arguments. They are comfortable with academic register, but not with jargon for its own sake.
 
 ## Tone
 

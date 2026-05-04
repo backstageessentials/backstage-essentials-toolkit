@@ -280,26 +280,28 @@ whether a unit is short on visuals.
 visual_aids:
   unit_1:
     diagrams:
-      - lesson: "03-lifting-without-hurting-yourself.md"
+      - lesson: "02-key-events.md"
         type: flowchart
-        purpose: "Decision flow: roll, lift solo, or call a team lift"
-      - lesson: "05-traffic-patterns.md"
+        purpose: "Decision flow the student should walk through"
+      - lesson: "03-major-stages.md"
         type: flowchart
-        purpose: "Show day phases and the seams between them"
+        purpose: "Linear pipeline showing the stages of the process or period"
     microsims:
-      - lesson: "02-ppe-what-to-wear-when.md"
+      - lesson: "02-key-events.md"
         type: flashcards
-        file: "ppe-flashcards.html"
-        purpose: "Cycle through the five PPE pieces and recall when each is needed"
-      - lesson: "03-lifting-without-hurting-yourself.md"
+        file: "key-terms-flashcards.html"
+        purpose: "Drill the unit's terms or names until recall is automatic"
+      - lesson: "03-major-stages.md"
         type: decision-tree
-        file: "should-i-lift.html"
-        purpose: "Walk down the lift decision: wheels, weight, team or solo"
+        file: "decision-walkthrough.html"
+        purpose: "Walk down a branching decision the lesson teaches"
   unit_2:
     diagrams: []
     microsims: []
   # ... one block per unit ...
 ```
+
+The lesson filenames and purposes shown above are placeholders. Substitute lessons and purposes from the actual course. The diagram and microsim type fields draw from the toolkit's supported types (see `skills/diagram-builder/diagram-patterns.md` and `skills/microsim-builder/simulation-types-reference.md`).
 
 Conventions:
 - Diagram entries name the lesson file, the Mermaid type, and a one-line

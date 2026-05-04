@@ -30,6 +30,15 @@ Strongest signal: a lesson's frontmatter `learning_outcome` field matches the ou
 
 ```yaml
 ---
+title: "Evaluating Primary Source Reliability"
+learning_outcome: "Evaluate primary-source reliability using authorship, audience, and bias cues"
+---
+```
+
+A second example, from a technical course, shows the same shape:
+
+```yaml
+---
 title: "Diagnosing Wireless Mic Dropout"
 learning_outcome: "Troubleshoot a dropped wireless mic during a live show"
 ---
@@ -37,7 +46,7 @@ learning_outcome: "Troubleshoot a dropped wireless mic during a live show"
 
 Weaker but useful signal: the outcome's keywords appear in the lesson body.
 
-If the outcome is "Troubleshoot a dropped wireless mic during a live show," the keywords are wireless, mic, dropout, live, show, troubleshoot. A lesson that uses these terms likely covers the outcome even if the frontmatter doesn't say so.
+If the outcome is "Evaluate primary-source reliability using authorship, audience, and bias cues," the keywords are evaluate, primary, source, reliability, authorship, audience, bias. A lesson that uses these terms likely covers the outcome even if the frontmatter doesn't say so.
 
 The validator should look at both signals. Frontmatter is authoritative; body content is supporting evidence.
 
@@ -47,7 +56,7 @@ Each quiz question has a `learning_outcome_ref` field:
 
 ```yaml
 - id: u3-q05
-  learning_outcome_ref: "Troubleshoot a dropped wireless mic during a live show"
+  learning_outcome_ref: "Evaluate primary-source reliability using authorship, audience, and bias cues"
   ...
 ```
 
@@ -59,10 +68,10 @@ Report coverage as a matrix:
 
 | Outcome | Stated | Taught | Tested | Status |
 |---------|--------|--------|--------|--------|
-| "Demonstrate professional conduct on a real show floor" | Yes | Lesson 1.1, 1.2 | Q u1-kc-01, u1-q05 | OK |
-| "Trace an audio signal end to end" | Yes | (none) | Q u3-q12 | TAUGHT MISSING |
-| "Calibrate a console for a specific room" | Yes | Lesson 4.3 | (none) | TESTED MISSING |
-| "Network audio principles" | Yes | (none) | (none) | UNCOVERED |
+| "Argue why a colony chose to remain loyal or rebel" | Yes | Lesson 1.3, 2.1 | Q u1-kc-04, u2-q07 | OK |
+| "Compare colonial life before and after 1763" | Yes | (none) | Q u1-q03 | TAUGHT MISSING |
+| "Interpret the colonial response to the Stamp Act" | Yes | Lesson 1.2 | (none) | TESTED MISSING |
+| "Evaluate the diplomatic role of France" | Yes | (none) | (none) | UNCOVERED |
 
 Status values:
 

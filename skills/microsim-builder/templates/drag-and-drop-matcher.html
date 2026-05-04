@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Matcher</title>
+<style>
+  :root {
+    --brand: #D6006C;
+    --bg: #FFFFFF;
+    --text: #0A0A0A;
+    --muted: rgba(10, 10, 10, 0.6);
+    --rule: #eaeaea;
+    --soft: rgba(214, 0, 108, 0.06);
+    --good: #2a7a44;
+    --bad: #c0392b;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    line-height: 1.5; font-size: 16px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 24px 20px; }
+  h1 { color: var(--brand); font-size: 1.4rem; margin: 0 0 0.4em 0; }
+  .intro { color: var(--muted); margin: 0 0 1em 0; font-size: 0.95rem; }
+  .board {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .col-label {
+    grid-column: span 1; font-size: 0.85rem; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;
+  }
+  .term, .slot {
+    padding: 12px 14px; border-radius: 8px; font-size: 0.95rem;
+    user-select: none; min-height: 44px; display: flex; align-items: center;
+  }
+  .term {
+    background: var(--bg); border: 2px solid var(--brand); color: var(--text);
+    cursor: grab; font-weight: 600;
+  }
+  .term.dragging { opacity: 0.5; }
+  .term.locked {
+    background: var(--brand); color: white; cursor: default;
+  }
+  .slot {
+    background: var(--soft); border: 2px dashed var(--brand);
+    color: var(--text);
+  }
+  .slot.over { background: rgba(214, 0, 108, 0.12); }
+  .slot.matched {
+    background: var(--bg); border-style: solid;
+  }
+  .slot .definition { font-size: 0.92rem; margin-bottom: 0.2em; }
+  .slot .matched-term {
+    color: var(--brand); font-weight: 700; margin-top: 0.2em;
+  }
+  .summary {
+    margin-top: 1em; padding: 14px 18px; border-radius: 8px;
+    background: var(--soft); color: var(--brand); font-weight: 600;
+    text-align: center;
+  }
+  .reset-row { margin-top: 0.6em; text-align: right; }
+  button {
+    font-family: inherit; padding: 6px 14px; border-radius: 6px;
+    background: var(--bg); color: var(--text); border: 1px solid var(--rule);
+    cursor: pointer; font-size: 0.9rem;
+  }
+  .feedback { font-size: 0.85rem; color: var(--muted); margin-top: 0.4em; min-height: 1.4em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="title"></h1>
+  <p class="intro" id="intro"></p>
+  <div class="board">
+    <div class="col-label">Drag from</div>
+    <div class="col-label">Drop on</div>
+    <div id="terms-col"></div>
+    <div id="slots-col"></div>
+  </div>
+  <div class="feedback" id="feedback"></div>
+  <div class="summary" id="summary" style="display:none;"></div>
+  <div class="reset-row"><button id="reset-btn">Reset</button></div>
+</div>
+<script>
+// <!-- CUSTOMIZE -->
+const CONFIG = {
+  title: "Match Them",
+  intro: "Drag each term on the left to its match on the right.",
+  pairs: [
+    { term: "Term A", definition: "Definition that goes with term A." },
+    { term: "Term B", definition: "Definition that goes with term B." },
+    { term: "Term C", definition: "Definition that goes with term C." },
+    { term: "Term D", definition: "Definition that goes with term D." },
+  ],
+  doneMessage: "All matched. Wrong tries: {misses}.",
+};
+// END CUSTOMIZE -->
+
+(function () {
+  const titleEl = document.getElementById("title");
+  const introEl = document.getElementById("intro");
+  const termsCol = document.getElementById("terms-col");
+  const slotsCol = document.getElementById("slots-col");
+  const feedbackEl = document.getElementById("feedback");
+  const summaryEl = document.getElementById("summary");
+  const resetBtn = document.getElementById("reset-btn");
+
+  let misses = 0;
+  let matched = 0;
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function start() {
+    titleEl.textContent = CONFIG.title;
+    introEl.textContent = CONFIG.intro;
+    termsCol.innerHTML = "";
+    slotsCol.innerHTML = "";
+    summaryEl.style.display = "none";
+    feedbackEl.textContent = "";
+    misses = 0;
+    matched = 0;
+
+    const termOrder = shuffle(CONFIG.pairs.map(function (p, i) { return i; }));
+    const slotOrder = shuffle(CONFIG.pairs.map(function (p, i) { return i; }));
+
+    termOrder.forEach(function (idx) {
+      const p = CONFIG.pairs[idx];
+      const el = document.createElement("div");
+      el.className = "term";
+      el.textContent = p.term;
+      el.draggable = true;
+      el.dataset.idx = idx;
+      el.addEventListener("dragstart", onDragStart);
+      el.addEventListener("dragend", onDragEnd);
+      termsCol.appendChild(el);
+    });
+
+    slotOrder.forEach(function (idx) {
+      const p = CONFIG.pairs[idx];
+      const el = document.createElement("div");
+      el.className = "slot";
+      el.dataset.idx = idx;
+      const def = document.createElement("div");
+      def.className = "definition";
+      def.textContent = p.definition;
+      el.appendChild(def);
+      el.addEventListener("dragover", onDragOver);
+      el.addEventListener("dragleave", onDragLeave);
+      el.addEventListener("drop", onDrop);
+      slotsCol.appendChild(el);
+    });
+  }
+
+  function onDragStart(e) {
+    e.dataTransfer.setData("text/idx", this.dataset.idx);
+    this.classList.add("dragging");
+  }
+  function onDragEnd() { this.classList.remove("dragging"); }
+  function onDragOver(e) {
+    if (this.classList.contains("matched")) return;
+    e.preventDefault();
+    this.classList.add("over");
+  }
+  function onDragLeave() { this.classList.remove("over"); }
+  function onDrop(e) {
+    e.preventDefault();
+    this.classList.remove("over");
+    if (this.classList.contains("matched")) return;
+    const termIdx = parseInt(e.dataTransfer.getData("text/idx"), 10);
+    const slotIdx = parseInt(this.dataset.idx, 10);
+    if (termIdx === slotIdx) {
+      this.classList.add("matched");
+      const tag = document.createElement("div");
+      tag.className = "matched-term";
+      tag.textContent = CONFIG.pairs[termIdx].term;
+      this.appendChild(tag);
+      const draggedEl = termsCol.querySelector('[data-idx="' + termIdx + '"]');
+      if (draggedEl) {
+        draggedEl.classList.add("locked");
+        draggedEl.draggable = false;
+      }
+      matched++;
+      feedbackEl.textContent = "Match.";
+      if (matched === CONFIG.pairs.length) {
+        summaryEl.style.display = "block";
+        summaryEl.textContent = CONFIG.doneMessage.replace("{misses}", misses);
+      }
+    } else {
+      misses++;
+      feedbackEl.textContent = "Not a match. Try again.";
+    }
+  }
+
+  resetBtn.addEventListener("click", start);
+  start();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timeline</title>
+<style>
+  :root {
+    --brand: #D6006C;
+    --bg: #FFFFFF;
+    --text: #0A0A0A;
+    --muted: rgba(10, 10, 10, 0.6);
+    --rule: #eaeaea;
+    --soft: rgba(214, 0, 108, 0.06);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    line-height: 1.5; font-size: 16px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 24px 20px; }
+  h1 { color: var(--brand); font-size: 1.4rem; margin: 0 0 0.4em 0; }
+  .intro { color: var(--muted); margin: 0 0 1em 0; font-size: 0.95rem; }
+  #canvas-container { width: 100%; }
+  #canvas-container canvas { max-width: 100%; height: auto; display: block; }
+  .state-panel {
+    margin-top: 1em; padding: 16px 20px;
+    background: var(--soft); border-left: 3px solid var(--brand);
+    border-radius: 0 6px 6px 0;
+  }
+  .state-panel .label { color: var(--brand); font-weight: 700; font-size: 1rem; margin-bottom: 0.4em; }
+  .state-panel .body { font-size: 0.98rem; }
+  .controls { margin-top: 0.6em; display: flex; gap: 8px; flex-wrap: wrap; }
+  .controls button {
+    flex: 1; min-width: 90px; padding: 8px 14px; font-family: inherit; font-size: 0.9rem;
+    background: var(--bg); border: 1px solid var(--rule); color: var(--text);
+    border-radius: 6px; cursor: pointer;
+  }
+  .controls button.active {
+    background: var(--brand); color: white; border-color: var(--brand);
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="title"></h1>
+  <p class="intro" id="intro"></p>
+  <div id="canvas-container"></div>
+  <div class="state-panel">
+    <div class="label" id="state-label"></div>
+    <div class="body" id="state-body"></div>
+  </div>
+  <div class="controls" id="stage-buttons"></div>
+</div>
+<script>
+// <!-- CUSTOMIZE -->
+const CONFIG = {
+  title: "Timeline",
+  intro: "Drag the scrubber or click a stage to see what is happening.",
+  stages: [
+    { id: "s1", label: "Stage 1", durationMin: 60, state: "Description of stage 1." },
+    { id: "s2", label: "Stage 2", durationMin: 30, state: "Description of stage 2." },
+    { id: "s3", label: "Stage 3", durationMin: 45, state: "Description of stage 3." },
+  ],
+};
+// END CUSTOMIZE -->
+
+document.getElementById("title").textContent = CONFIG.title;
+document.getElementById("intro").textContent = CONFIG.intro;
+const stateLabel = document.getElementById("state-label");
+const stateBody = document.getElementById("state-body");
+const buttonsEl = document.getElementById("stage-buttons");
+
+const W = 600, H = 200;
+const TRACK_Y = 100;
+const TRACK_LEFT = 30, TRACK_RIGHT = W - 30;
+const TRACK_W = TRACK_RIGHT - TRACK_LEFT;
+const totalMin = CONFIG.stages.reduce(function (s, st) { return s + st.durationMin; }, 0);
+let scrubberX = TRACK_LEFT;
+let dragging = false;
+
+function setup() {
+  const cnv = createCanvas(W, H);
+  cnv.parent("canvas-container");
+  textFont('system-ui, sans-serif');
+  buildButtons();
+  updateStateFromX();
+}
+
+function buildButtons() {
+  CONFIG.stages.forEach(function (st, i) {
+    const btn = document.createElement("button");
+    btn.textContent = st.label;
+    btn.dataset.idx = i;
+    btn.addEventListener("click", function () {
+      const startMin = stagesStartMinutes()[i];
+      scrubberX = TRACK_LEFT + (startMin / totalMin) * TRACK_W + 1;
+      updateStateFromX();
+    });
+    buttonsEl.appendChild(btn);
+  });
+}
+
+function stagesStartMinutes() {
+  let acc = 0;
+  return CONFIG.stages.map(function (st) {
+    const start = acc;
+    acc += st.durationMin;
+    return start;
+  });
+}
+
+function draw() {
+  background('#FFFFFF');
+  noStroke();
+  fill('#eaeaea');
+  rect(TRACK_LEFT, TRACK_Y - 6, TRACK_W, 12, 6);
+
+  const starts = stagesStartMinutes();
+  starts.forEach(function (start, i) {
+    const x = TRACK_LEFT + (start / totalMin) * TRACK_W;
+    stroke('#D6006C');
+    strokeWeight(2);
+    line(x, TRACK_Y - 22, x, TRACK_Y + 22);
+    noStroke();
+    fill('rgba(10,10,10,0.7)');
+    textAlign(LEFT, BOTTOM);
+    textSize(12);
+    text(CONFIG.stages[i].label, x + 4, TRACK_Y - 24);
+  });
+
+  const xEnd = TRACK_LEFT + TRACK_W;
+  stroke('#D6006C');
+  strokeWeight(2);
+  line(xEnd, TRACK_Y - 22, xEnd, TRACK_Y + 22);
+
+  noStroke();
+  fill('#D6006C');
+  rect(TRACK_LEFT, TRACK_Y - 6, scrubberX - TRACK_LEFT, 12, 6);
+
+  fill('#FFFFFF');
+  stroke('#D6006C');
+  strokeWeight(3);
+  circle(scrubberX, TRACK_Y, 22);
+}
+
+function mousePressed() {
+  if (mouseY > TRACK_Y - 30 && mouseY < TRACK_Y + 30 &&
+      mouseX > TRACK_LEFT - 12 && mouseX < TRACK_RIGHT + 12) {
+    dragging = true;
+    scrubberX = constrain(mouseX, TRACK_LEFT, TRACK_RIGHT);
+    updateStateFromX();
+  }
+}
+
+function mouseDragged() {
+  if (dragging) {
+    scrubberX = constrain(mouseX, TRACK_LEFT, TRACK_RIGHT);
+    updateStateFromX();
+  }
+}
+
+function mouseReleased() { dragging = false; }
+
+function updateStateFromX() {
+  const minute = ((scrubberX - TRACK_LEFT) / TRACK_W) * totalMin;
+  let acc = 0;
+  let stage = CONFIG.stages[CONFIG.stages.length - 1];
+  let activeIdx = CONFIG.stages.length - 1;
+  for (let i = 0; i < CONFIG.stages.length; i++) {
+    acc += CONFIG.stages[i].durationMin;
+    if (minute < acc) { stage = CONFIG.stages[i]; activeIdx = i; break; }
+  }
+  stateLabel.textContent = stage.label;
+  stateBody.textContent = stage.state;
+  Array.from(buttonsEl.children).forEach(function (b, i) {
+    b.classList.toggle("active", i === activeIdx);
+  });
+}
+</script>
+</body>
+</html>

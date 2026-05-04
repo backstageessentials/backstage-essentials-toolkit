@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decision Tree</title>
+<style>
+  :root {
+    --brand: #D6006C;
+    --bg: #FFFFFF;
+    --text: #0A0A0A;
+    --muted: rgba(10, 10, 10, 0.6);
+    --rule: #eaeaea;
+    --soft: rgba(214, 0, 108, 0.06);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    line-height: 1.5; font-size: 16px;
+  }
+  .wrap { max-width: 540px; margin: 0 auto; padding: 24px 20px; }
+  h1 { color: var(--brand); font-size: 1.4rem; margin: 0 0 0.4em 0; }
+  .intro { color: var(--muted); margin: 0 0 1.4em 0; font-size: 0.95rem; }
+  .breadcrumb {
+    color: var(--muted); font-size: 0.85rem; margin-bottom: 0.6em; min-height: 1.4em;
+  }
+  .panel {
+    border: 2px solid var(--brand); border-radius: 10px; padding: 20px 22px;
+    background: var(--bg); margin-bottom: 1em;
+  }
+  .question { font-size: 1.05rem; font-weight: 700; margin: 0 0 1em 0; }
+  .choices { display: flex; flex-direction: column; gap: 8px; }
+  .choice-btn {
+    text-align: left; padding: 11px 16px; font-family: inherit; font-size: 0.95rem;
+    background: var(--bg); border: 1px solid var(--brand); color: var(--text);
+    border-radius: 6px; cursor: pointer; transition: background 0.15s;
+  }
+  .choice-btn:hover { background: var(--soft); }
+  .result-title { color: var(--brand); font-size: 1.15rem; font-weight: 800; margin: 0 0 0.5em 0; }
+  .result-body { font-size: 1rem; }
+  .controls { display: flex; gap: 8px; margin-top: 0.5em; }
+  .reset {
+    flex: 1; max-width: 200px; padding: 9px 14px; font-family: inherit; font-size: 0.9rem;
+    background: var(--bg); color: var(--text); border: 1px solid var(--rule);
+    border-radius: 6px; cursor: pointer;
+  }
+  .back {
+    flex: 0 0 auto; padding: 9px 14px; font-family: inherit; font-size: 0.9rem;
+    background: var(--bg); color: var(--brand); border: 1px solid var(--brand);
+    border-radius: 6px; cursor: pointer;
+  }
+  .back:disabled { opacity: 0.4; cursor: not-allowed; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="title"></h1>
+  <p class="intro" id="intro"></p>
+  <div class="breadcrumb" id="breadcrumb"></div>
+  <div class="panel" id="panel"></div>
+  <div class="controls">
+    <button class="back" id="back-btn">Back</button>
+    <button class="reset" id="reset-btn">Start over</button>
+  </div>
+</div>
+<script>
+// <!-- CUSTOMIZE -->
+const CONFIG = {
+  title: "Decision Tree",
+  intro: "Pick an answer to walk down the tree.",
+  start: "q1",
+  nodes: {
+    q1: {
+      type: "question",
+      question: "First question?",
+      choices: [
+        { label: "Yes", next: "r1" },
+        { label: "No", next: "r2" },
+      ],
+    },
+    r1: { type: "result", title: "Outcome A", body: "Description of outcome A." },
+    r2: { type: "result", title: "Outcome B", body: "Description of outcome B." },
+  },
+};
+// END CUSTOMIZE -->
+
+(function () {
+  const titleEl = document.getElementById("title");
+  const introEl = document.getElementById("intro");
+  const panelEl = document.getElementById("panel");
+  const breadcrumbEl = document.getElementById("breadcrumb");
+  const backBtn = document.getElementById("back-btn");
+  const resetBtn = document.getElementById("reset-btn");
+
+  let history = [];
+
+  function start() {
+    history = [CONFIG.start];
+    render();
+  }
+
+  function render() {
+    titleEl.textContent = CONFIG.title;
+    introEl.textContent = CONFIG.intro;
+    const id = history[history.length - 1];
+    const node = CONFIG.nodes[id];
+    if (!node) {
+      panelEl.innerHTML = "<p>Missing node: " + id + "</p>";
+      return;
+    }
+    backBtn.disabled = history.length <= 1;
+    breadcrumbEl.textContent = history.length > 1
+      ? "Step " + history.length + " of " + history.length
+      : "";
+
+    if (node.type === "question") {
+      const q = document.createElement("p");
+      q.className = "question";
+      q.textContent = node.question;
+      const choicesDiv = document.createElement("div");
+      choicesDiv.className = "choices";
+      node.choices.forEach(function (c) {
+        const btn = document.createElement("button");
+        btn.className = "choice-btn";
+        btn.textContent = c.label;
+        btn.addEventListener("click", function () {
+          history.push(c.next);
+          render();
+        });
+        choicesDiv.appendChild(btn);
+      });
+      panelEl.innerHTML = "";
+      panelEl.appendChild(q);
+      panelEl.appendChild(choicesDiv);
+    } else if (node.type === "result") {
+      const titleP = document.createElement("p");
+      titleP.className = "result-title";
+      titleP.textContent = node.title;
+      const bodyP = document.createElement("p");
+      bodyP.className = "result-body";
+      bodyP.textContent = node.body;
+      panelEl.innerHTML = "";
+      panelEl.appendChild(titleP);
+      panelEl.appendChild(bodyP);
+    }
+  }
+
+  backBtn.addEventListener("click", function () {
+    if (history.length > 1) {
+      history.pop();
+      render();
+    }
+  });
+  resetBtn.addEventListener("click", start);
+
+  start();
+})();
+</script>
+</body>
+</html>

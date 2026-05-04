@@ -1,0 +1,9 @@
+course:
+  name: "Home Coffee Brewing Basics"
+  slug: "home-coffee-brewing-basics"
+  description_path: "./course-description.md"
+  voice_guide_path: "./voice-guide.md"
+  platform: "static-web"
+  completion_threshold: 0.75
+  units: 1
+  language: "en"

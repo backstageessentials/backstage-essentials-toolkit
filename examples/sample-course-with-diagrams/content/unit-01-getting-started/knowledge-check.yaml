@@ -1,0 +1,4 @@
+quiz:
+  title: "Unit 1 Knowledge Check"
+  pass_threshold: 0.7
+  questions: []

@@ -1,0 +1,8 @@
+unit:
+  number: 1
+  title: "Getting Started"
+  description: "Pick a method, run the brew, and read the bean."
+  learning_outcomes:
+    - "Apply a method-selection rule to choose between drip, pour-over, and espresso."
+    - "Demonstrate the standard pour-over brew sequence."
+    - "Identify the four lifecycle states a bean lives through."

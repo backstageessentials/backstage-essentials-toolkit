@@ -24,6 +24,7 @@ from .commands import build_final as build_final_cmd
 from .commands import build_course as build_course_cmd
 from .commands import add_diagrams as add_diagrams_cmd
 from .commands import add_microsim as add_microsim_cmd
+from .commands import preview as preview_cmd
 
 console = Console()
 
@@ -188,6 +189,22 @@ def add_diagrams(unit_number: int, max_diagrams_per_lesson: int,
         allowed_types=allowed_types,
         lesson_filter=lesson_filter,
     ))
+
+
+@main.command(name="preview")
+@click.option("--open", "open_after", is_flag=True,
+              help="Open the rendered preview in the default browser when done.")
+def preview(open_after: bool):
+    """Render the course-level preview HTML (every unit plus the course final)."""
+    sys.exit(preview_cmd.run_course(open_after=open_after))
+
+
+@main.command(name="preview-final")
+@click.option("--open", "open_after", is_flag=True,
+              help="Open the rendered preview in the default browser when done.")
+def preview_final(open_after: bool):
+    """Render a standalone preview of just the course final assessment."""
+    sys.exit(preview_cmd.run_final(open_after=open_after))
 
 
 @main.command(name="add-microsim")

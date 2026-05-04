@@ -5,6 +5,10 @@ from .preview import (
     render_all_units,
     render_course_preview,
     write_course_preview,
+    render_final_preview,
+    write_final_preview,
+    render_test_section,
+    detect_quiz_mode,
     BRAND_COLORS,
 )
 
@@ -13,5 +17,9 @@ __all__ = [
     "render_all_units",
     "render_course_preview",
     "write_course_preview",
+    "render_final_preview",
+    "write_final_preview",
+    "render_test_section",
+    "detect_quiz_mode",
     "BRAND_COLORS",
 ]

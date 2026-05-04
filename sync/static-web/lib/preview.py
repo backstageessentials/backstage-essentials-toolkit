@@ -370,6 +370,106 @@ details > p:first-of-type { margin-top: 0.6em; }
 .kc-list { padding-left: 1.6em; }
 .kc-list > li { margin-bottom: 1.8em; padding-left: 0.4em; }
 .kc-list > li::marker { font-weight: 800; color: var(--brand); }
+
+/* Test mode (course final): interactive form with radios, score, reveal. */
+.test-section {
+  margin-top: 2em;
+  padding-top: 1.4em;
+  border-top: 2px solid var(--brand);
+}
+.test-meta {
+  font-size: 0.92rem; color: var(--muted);
+  background: rgba(214, 0, 108, 0.04);
+  border-radius: 6px; padding: 10px 14px; margin: 0 0 1em 0;
+}
+.test-progress {
+  position: sticky; top: 0; z-index: 5;
+  background: var(--bg);
+  padding: 10px 14px; margin: 0 0 1em 0;
+  border: 1px solid var(--brand); border-radius: 6px;
+  font-weight: 700; color: var(--brand);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.test-question {
+  margin: 0 0 1.6em 0;
+  padding: 14px 16px;
+  border: 1px solid var(--rule); border-radius: 8px;
+}
+.test-question .question { margin: 0 0 0.6em 0; }
+.test-choices { list-style: none; padding-left: 0; margin: 0.4em 0 0 0; }
+.test-choices > li { margin: 0.35em 0; padding: 0; }
+.test-choices label {
+  display: block; cursor: pointer;
+  padding: 8px 12px; border-radius: 6px; border: 1px solid transparent;
+  transition: background 0.12s, border-color 0.12s;
+}
+.test-choices label:hover { background: rgba(214, 0, 108, 0.04); }
+.test-choices input[type="radio"] {
+  margin-right: 10px;
+  accent-color: var(--brand);
+  transform: translateY(1px);
+}
+.test-choices label.choice-correct {
+  background: rgba(0, 128, 0, 0.10);
+  border-color: #008000;
+}
+.test-choices label.choice-wrong {
+  background: rgba(187, 0, 0, 0.10);
+  border-color: #BB0000;
+}
+.test-choices label.choice-correct::after,
+.test-choices label.choice-wrong::after {
+  font-weight: 700; margin-left: 8px; font-size: 0.85rem;
+}
+.test-choices label.choice-correct::after {
+  content: "Correct"; color: #008000;
+}
+.test-choices label.choice-wrong::after {
+  content: "Your pick"; color: #BB0000;
+}
+.test-explanation {
+  margin-top: 0.6em; padding: 10px 14px;
+  background: rgba(214, 0, 108, 0.04);
+  border-left: 3px solid var(--brand);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.95rem;
+}
+.test-submit {
+  display: block; width: 100%; max-width: 320px; margin: 1.4em auto 0 auto;
+  padding: 14px 24px; font-family: inherit; font-size: 1rem; font-weight: 700;
+  background: var(--brand); color: white; border: none;
+  border-radius: 8px; cursor: pointer;
+}
+.test-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.test-results-panel {
+  margin-top: 1.4em; padding: 24px 24px;
+  border: 2px solid var(--brand); border-radius: 10px;
+  text-align: center;
+}
+.test-results-panel .score {
+  font-size: 2.4rem; font-weight: 800; color: var(--brand);
+  margin: 0 0 0.2em 0;
+}
+.test-results-panel .pct {
+  font-size: 1.1rem; color: var(--muted); margin: 0 0 0.8em 0;
+}
+.test-passfail {
+  display: inline-block; padding: 6px 16px; border-radius: 999px;
+  font-weight: 700; font-size: 0.95rem; margin: 0 0 1em 0;
+}
+.test-passfail.pass { background: rgba(0, 128, 0, 0.12); color: #008000; }
+.test-passfail.fail { background: rgba(187, 0, 0, 0.12); color: #BB0000; }
+.test-reveal-btn {
+  font-family: inherit; font-size: 0.95rem; font-weight: 600;
+  padding: 10px 18px; border-radius: 6px; cursor: pointer;
+  background: var(--bg); color: var(--brand);
+  border: 2px solid var(--brand);
+}
+.test-empty {
+  padding: 24px; border: 1px dashed var(--brand); border-radius: 8px;
+  background: rgba(214, 0, 108, 0.03);
+  text-align: center; color: var(--muted);
+}
 """
 
 _MERMAID_HEAD = '<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>'
@@ -430,6 +530,338 @@ def _render_question(idx: int, q: dict) -> str:
         "    </details>\n"
         "  </li>"
     )
+
+
+# --------------------------------------------------------------------------
+# Test mode (course final): interactive form with score + reveal.
+# --------------------------------------------------------------------------
+
+def detect_quiz_mode(yaml_path: Path, data: Optional[dict] = None) -> str:
+    """Return 'test' or 'study' for a quiz YAML file.
+
+    Convention:
+    - Anything in exam/ at the course root is test mode.
+    - Anything named knowledge-check.yaml in a unit folder is study mode.
+    A top-level mode: key (or one nested under quiz: / final_assessment:)
+    overrides the convention.
+    """
+    if data is None:
+        try:
+            data = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
+        except Exception:
+            data = {}
+    explicit = data.get("mode")
+    if not explicit and isinstance(data.get("quiz"), dict):
+        explicit = data["quiz"].get("mode")
+    if not explicit and isinstance(data.get("final_assessment"), dict):
+        explicit = data["final_assessment"].get("mode")
+    if explicit in ("test", "study"):
+        return explicit
+    if yaml_path.parent.name == "exam":
+        return "test"
+    return "study"
+
+
+def _load_course_final(course_root: Path) -> Optional[dict]:
+    """Return the final_assessment dict from exam/course-final.yaml or None."""
+    path = course_root / "exam" / "course-final.yaml"
+    if not path.exists():
+        return None
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return None
+    final = data.get("final_assessment", {})
+    return final if isinstance(final, dict) else None
+
+
+def _render_test_question(idx: int, q: dict, q_id: str) -> str:
+    """Render one test-mode question with radio choices and a hidden explanation."""
+    question_text = (q.get("question") or "").strip()
+    choices = q.get("choices") or []
+    explanation = (q.get("explanation") or "").strip()
+
+    correct_indices = [i for i, c in enumerate(choices) if c.get("correct")]
+    correct_attr = ",".join(str(i) for i in correct_indices)
+
+    question_html = "<br>\n".join(_esc(line) for line in question_text.splitlines())
+
+    choice_lis = []
+    for i, c in enumerate(choices):
+        choice_text = _esc(c.get("text", ""))
+        radio_id = f"{q_id}-c{i}"
+        choice_lis.append(
+            f'    <li>'
+            f'<label for="{radio_id}">'
+            f'<input type="radio" id="{radio_id}" name="{q_id}" value="{i}">'
+            f'<span class="choice-text">{choice_text}</span>'
+            f'</label></li>'
+        )
+    choices_html = "\n".join(choice_lis)
+
+    explanation_paras = []
+    for para in explanation.split("\n\n"):
+        para = para.strip()
+        if para:
+            explanation_paras.append(f"<p>{_esc(para)}</p>")
+    explanation_html = "\n".join(explanation_paras)
+
+    return (
+        f'<div class="test-question" data-q-id="{_esc(q_id)}" data-correct-indices="{correct_attr}">\n'
+        f'  <p class="question">{question_html}</p>\n'
+        f'  <ul class="test-choices">\n{choices_html}\n  </ul>\n'
+        f'  <div class="test-explanation" hidden>\n'
+        f'    <p><strong>Why:</strong></p>\n'
+        f'    {explanation_html}\n'
+        f'  </div>\n'
+        f'</div>'
+    )
+
+
+_TEST_MODE_JS = """\
+<script>
+(function () {
+  document.querySelectorAll('.test-section').forEach(function (section) {
+    initTestSection(section);
+  });
+
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function initTestSection(section) {
+    var perAttempt = parseInt(section.dataset.perAttempt, 10) || 0;
+    var passThreshold = parseFloat(section.dataset.passThreshold) || 0;
+    var allQuestions = Array.prototype.slice.call(
+      section.querySelectorAll('.test-question')
+    );
+    if (allQuestions.length === 0) return;
+
+    // Random sample: hide questions beyond perAttempt
+    var perAttemptShown = perAttempt > 0
+      ? Math.min(perAttempt, allQuestions.length)
+      : allQuestions.length;
+    var indices = allQuestions.map(function (_, i) { return i; });
+    shuffle(indices);
+    var pickedSet = {};
+    for (var i = 0; i < perAttemptShown; i++) pickedSet[indices[i]] = true;
+    allQuestions.forEach(function (q, i) {
+      if (!pickedSet[i]) {
+        q.style.display = 'none';
+        q.classList.add('not-picked');
+      }
+    });
+
+    var visible = allQuestions.filter(function (q) {
+      return !q.classList.contains('not-picked');
+    });
+
+    var progressEl = section.querySelector('.test-progress-text');
+    var totalText = section.querySelector('.test-progress-total');
+    if (totalText) totalText.textContent = perAttemptShown;
+    updateProgress();
+
+    section.addEventListener('change', function (e) {
+      if (e.target && e.target.type === 'radio') updateProgress();
+    });
+
+    function updateProgress() {
+      var answered = 0;
+      visible.forEach(function (q) {
+        if (q.querySelector('input[type=radio]:checked')) answered++;
+      });
+      if (progressEl) progressEl.textContent = answered;
+    }
+
+    var form = section.querySelector('.test-form');
+    var submitBtn = section.querySelector('.test-submit');
+    var resultsPanel = section.querySelector('.test-results-panel');
+    var revealBtn = section.querySelector('.test-reveal-btn');
+    var scoreEl = section.querySelector('.test-results-panel .score');
+    var pctEl = section.querySelector('.test-results-panel .pct');
+    var passfailEl = section.querySelector('.test-passfail');
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var correct = 0;
+        var thresholdPct = Math.round(passThreshold * 100);
+        visible.forEach(function (q) {
+          var raw = (q.dataset.correctIndices || '').split(',').filter(Boolean);
+          var correctSet = {};
+          raw.forEach(function (s) { correctSet[parseInt(s, 10)] = true; });
+          var picked = q.querySelector('input[type=radio]:checked');
+          if (picked && correctSet[parseInt(picked.value, 10)]) {
+            correct++;
+            q.dataset.outcome = 'right';
+          } else {
+            q.dataset.outcome = picked ? 'wrong' : 'unanswered';
+          }
+        });
+        var total = visible.length;
+        var pct = total > 0 ? correct / total : 0;
+        if (scoreEl) scoreEl.textContent = correct + ' of ' + total;
+        if (pctEl) pctEl.textContent = Math.round(pct * 100) + ' percent';
+        if (passfailEl) {
+          if (pct >= passThreshold) {
+            passfailEl.textContent = 'Passed (threshold ' + thresholdPct + ' percent)';
+            passfailEl.className = 'test-passfail pass';
+          } else {
+            passfailEl.textContent = 'Did not pass (threshold ' + thresholdPct + ' percent)';
+            passfailEl.className = 'test-passfail fail';
+          }
+        }
+
+        // Hide form, show results
+        form.querySelectorAll('.test-question').forEach(function (q) {
+          q.style.display = 'none';
+        });
+        if (submitBtn) submitBtn.style.display = 'none';
+        var progressBar = section.querySelector('.test-progress');
+        if (progressBar) progressBar.style.display = 'none';
+        if (resultsPanel) resultsPanel.hidden = false;
+      });
+    }
+
+    if (revealBtn) {
+      revealBtn.addEventListener('click', function () {
+        // Re-show the picked questions, locked, color-coded, with explanations
+        visible.forEach(function (q) {
+          q.style.display = '';
+          var raw = (q.dataset.correctIndices || '').split(',').filter(Boolean);
+          var correctSet = {};
+          raw.forEach(function (s) { correctSet[parseInt(s, 10)] = true; });
+          var picked = q.querySelector('input[type=radio]:checked');
+          var pickedIdx = picked ? parseInt(picked.value, 10) : -1;
+          var labels = q.querySelectorAll('.test-choices label');
+          labels.forEach(function (label, i) {
+            var input = label.querySelector('input[type=radio]');
+            if (input) input.disabled = true;
+            if (correctSet[i]) {
+              label.classList.add('choice-correct');
+            } else if (i === pickedIdx) {
+              label.classList.add('choice-wrong');
+            }
+          });
+          var explanationEl = q.querySelector('.test-explanation');
+          if (explanationEl) explanationEl.hidden = false;
+        });
+        revealBtn.style.display = 'none';
+      });
+    }
+  }
+})();
+</script>
+"""
+
+
+def render_test_section(quiz_data: dict, section_id: str = "course-final-test",
+                         heading: str = "Final Assessment",
+                         intro: Optional[str] = None) -> str:
+    """Return the HTML for a test-mode quiz section.
+
+    quiz_data is the inner dict from the YAML (the value under final_assessment:
+    or quiz:). The renderer:
+    - Embeds every question in the page; an inline JS shuffle hides any
+      beyond questions_per_attempt on each load.
+    - Handles small or empty banks gracefully via min(bank, per_attempt).
+    """
+    questions = quiz_data.get("questions") or []
+    bank_size = len(questions)
+    per_attempt_raw = quiz_data.get("questions_per_attempt")
+    pass_threshold = quiz_data.get("pass_threshold", 0.75)
+    try:
+        pass_threshold = float(pass_threshold)
+    except (TypeError, ValueError):
+        pass_threshold = 0.75
+
+    if bank_size == 0:
+        return (
+            f'<section class="test-section" id="{_esc(section_id)}">\n'
+            f'  <h2>{_esc(heading)}</h2>\n'
+            f'  <div class="test-empty">\n'
+            f'    <p><strong>Test mode preview, no questions yet.</strong></p>\n'
+            f'    <p>Run <code>bes build-final</code> to generate the question bank.</p>\n'
+            f'  </div>\n'
+            f'</section>'
+        )
+
+    if per_attempt_raw is None:
+        per_attempt = bank_size
+    else:
+        try:
+            per_attempt = int(per_attempt_raw)
+        except (TypeError, ValueError):
+            per_attempt = bank_size
+    per_attempt = max(0, min(per_attempt, bank_size))
+    if per_attempt == 0:
+        per_attempt = bank_size
+
+    # Meta line
+    meta_lines = []
+    if bank_size < (per_attempt_raw or bank_size):
+        meta_lines.append(
+            f"Test mode preview with {per_attempt} of "
+            f"{per_attempt_raw} target questions available "
+            f"(bank has {bank_size})."
+        )
+    else:
+        meta_lines.append(
+            f"Test mode. Each load samples {per_attempt} of "
+            f"{bank_size} bank questions. Refresh for a new set."
+        )
+    meta_lines.append(
+        f"Pass threshold: {round(pass_threshold * 100)} percent."
+    )
+    meta_html = "<br>\n".join(_esc(line) for line in meta_lines)
+
+    intro_html = ""
+    if intro:
+        intro_html = f'  <p class="test-intro">{_esc(intro)}</p>\n'
+
+    # Render every question; JS hides those beyond perAttempt
+    question_blocks = []
+    for i, q in enumerate(questions):
+        q_id = q.get("id") or f"final-q{i+1:03d}"
+        question_blocks.append(_render_test_question(i, q, _safe_q_id(q_id)))
+    questions_html = "\n".join(question_blocks)
+
+    return (
+        f'<section class="test-section" id="{_esc(section_id)}" '
+        f'data-per-attempt="{per_attempt}" '
+        f'data-pass-threshold="{pass_threshold}">\n'
+        f'  <h2>{_esc(heading)}</h2>\n'
+        f'  <p class="test-meta">{meta_html}</p>\n'
+        f'{intro_html}'
+        f'  <form class="test-form">\n'
+        f'    <div class="test-progress">\n'
+        f'      <span><span class="test-progress-text">0</span> of '
+        f'<span class="test-progress-total">{per_attempt}</span> answered</span>\n'
+        f'    </div>\n'
+        f'    <div class="test-questions">\n{questions_html}\n    </div>\n'
+        f'    <button type="submit" class="test-submit">Submit</button>\n'
+        f'  </form>\n'
+        f'  <div class="test-results-panel" hidden>\n'
+        f'    <div class="score"></div>\n'
+        f'    <div class="pct"></div>\n'
+        f'    <div><span class="test-passfail"></span></div>\n'
+        f'    <button type="button" class="test-reveal-btn">Show correct answers and explanations</button>\n'
+        f'  </div>\n'
+        f'</section>'
+    )
+
+
+_Q_ID_SAFE_RE = re.compile(r"[^A-Za-z0-9_-]+")
+
+
+def _safe_q_id(raw: str) -> str:
+    """Return a string safe to use as an HTML name/id attribute."""
+    s = _Q_ID_SAFE_RE.sub("-", str(raw)).strip("-")
+    return s or "q"
 
 
 def render_unit_preview(unit_folder: Path, course_root: Optional[Path] = None) -> str:
@@ -603,10 +1035,14 @@ def _gather_units(course_root: Path) -> list[tuple[Path, Unit, dict]]:
 
 
 def render_course_preview(course_root: Path) -> str:
-    """Render the entire course (every unit) into one self-contained HTML page string."""
+    """Render the entire course (every unit, plus the course final) into one
+    self-contained HTML page string."""
     course_meta = _load_course_meta(course_root)
     md = _make_md()
     units_info = _gather_units(course_root)
+    final_data = _load_course_final(course_root)
+    final_name = (final_data or {}).get("name") or "Final Assessment"
+    has_final = final_data is not None
 
     course_h1 = _esc(course_meta.course_name)
     page_title = f"{course_meta.course_name} Course Preview"
@@ -620,6 +1056,10 @@ def render_course_preview(course_root: Path) -> str:
         f'<li><a href="#unit-{u.number}">Unit {u.number}: {_esc(u.title)}</a></li>'
         for _folder, u, _raw in units_info
     ]
+    if has_final:
+        toc_items.append(
+            f'<li><a href="#course-final-test">{_esc(final_name)}</a></li>'
+        )
     toc_html = (
         "<nav>\n"
         "  <h2>Contents</h2>\n"
@@ -679,6 +1119,16 @@ def render_course_preview(course_root: Path) -> str:
         '<p class="empty"><em>No units found in this course.</em></p>'
     )
 
+    final_html = ""
+    test_js = ""
+    if has_final:
+        final_html = render_test_section(
+            final_data,
+            section_id="course-final-test",
+            heading=final_name,
+        )
+        test_js = _TEST_MODE_JS
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -697,9 +1147,12 @@ def render_course_preview(course_root: Path) -> str:
 
 {units_html}
 
+{final_html}
+
     <a class="back-to-top" href="#top">Back to top &uarr;</a>
   </div>
   {_MERMAID_INIT}
+  {test_js}
 </body>
 </html>
 """
@@ -732,4 +1185,65 @@ def write_course_preview(course_root: Path, output_dir: Path) -> Path:
                     shutil.rmtree(microsims_dst)
                 shutil.copytree(microsims_src, microsims_dst)
 
+    return out_path
+
+
+# --------------------------------------------------------------------------
+# Standalone final preview: just the course final, in test mode.
+# --------------------------------------------------------------------------
+
+def render_final_preview(course_root: Path) -> str:
+    """Render a self-contained HTML page that shows only the course final."""
+    course_meta = _load_course_meta(course_root)
+    final_data = _load_course_final(course_root)
+    course_h1 = _esc(course_meta.course_name)
+    final_name = (final_data or {}).get("name") or "Final Assessment"
+    page_title = f"{course_meta.course_name} Final Preview"
+
+    if final_data is None:
+        body_html = (
+            '<section class="test-section">\n'
+            '  <h2>No final assessment found.</h2>\n'
+            '  <div class="test-empty">\n'
+            '    <p>No <code>exam/course-final.yaml</code> at the course root.</p>\n'
+            '    <p>Run <code>bes build-final</code> to generate one.</p>\n'
+            '  </div>\n'
+            '</section>'
+        )
+        test_js = ""
+    else:
+        body_html = render_test_section(
+            final_data,
+            section_id="course-final-test",
+            heading=final_name,
+        )
+        test_js = _TEST_MODE_JS
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{_esc(page_title)}</title>
+  <style>
+{_CSS}{_COURSE_CSS_OVERRIDES}</style>
+</head>
+<body id="top">
+  <div class="container">
+    <h1>{course_h1}</h1>
+{body_html}
+    <a class="back-to-top" href="#top">Back to top &uarr;</a>
+  </div>
+  {test_js}
+</body>
+</html>
+"""
+
+
+def write_final_preview(course_root: Path, output_dir: Path) -> Path:
+    """Render the standalone final preview to output_dir/final-preview.html."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    html = render_final_preview(course_root)
+    out_path = output_dir / "final-preview.html"
+    out_path.write_text(html, encoding="utf-8")
     return out_path

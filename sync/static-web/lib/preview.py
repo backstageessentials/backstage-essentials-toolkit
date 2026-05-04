@@ -541,3 +541,195 @@ def render_all_units(course_root: Path, output_dir: Path,
             shutil.copytree(microsims_src, microsims_dst)
 
     return written
+
+
+# --------------------------------------------------------------------------
+# Course-level preview: every unit on one page with a TOC.
+# --------------------------------------------------------------------------
+
+_COURSE_CSS_OVERRIDES = """\
+html { scroll-behavior: smooth; }
+.container { max-width: 800px; }
+.course-tagline {
+  font-size: 1.05rem; color: var(--muted); font-style: italic;
+  margin: 0.4em 0 1.6em 0;
+}
+.toc {
+  background: rgba(214, 0, 108, 0.04);
+  border-left: 3px solid var(--brand);
+  border-radius: 0 6px 6px 0;
+  padding: 12px 18px 12px 36px;
+  margin: 0 0 2.4em 0;
+  font-size: 0.98rem;
+}
+.toc li { margin: 0.35em 0; }
+.toc a { font-weight: 600; }
+.unit { padding-top: 1em; }
+.unit + .unit { margin-top: 1em; border-top: 1px solid var(--rule); }
+.outcomes {
+  font-size: 0.95rem; color: var(--muted);
+  background: rgba(214, 0, 108, 0.03);
+  border-radius: 6px; padding: 10px 16px 10px 32px;
+  margin: 0.4em 0 1.4em 0;
+}
+.outcomes li { margin: 0.25em 0; }
+.empty {
+  color: var(--muted); font-size: 0.95rem; margin: 1em 0;
+}
+.back-to-top {
+  display: block; text-align: center;
+  margin: 2.4em 0 0.6em 0; padding: 14px 0;
+  border-top: 1px solid var(--rule);
+  font-size: 0.9rem;
+}
+"""
+
+
+def _gather_units(course_root: Path) -> list[tuple[Path, Unit, dict]]:
+    """Return a list of (unit_folder, Unit, raw unit dict) sorted by folder name."""
+    out = []
+    content_root = course_root / "content"
+    if not content_root.exists():
+        return out
+    for unit_folder in sorted(content_root.glob("unit-*")):
+        if not unit_folder.is_dir():
+            continue
+        unit_yaml_path = unit_folder / "unit.yaml"
+        if not unit_yaml_path.exists():
+            continue
+        unit_data = (yaml.safe_load(unit_yaml_path.read_text(encoding="utf-8")) or {}).get("unit", {})
+        out.append((unit_folder, _load_unit(unit_folder), unit_data))
+    return out
+
+
+def render_course_preview(course_root: Path) -> str:
+    """Render the entire course (every unit) into one self-contained HTML page string."""
+    course_meta = _load_course_meta(course_root)
+    md = _make_md()
+    units_info = _gather_units(course_root)
+
+    course_h1 = _esc(course_meta.course_name)
+    page_title = f"{course_meta.course_name} Course Preview"
+    tagline_html = (
+        f'    <p class="course-tagline">{_esc(course_meta.tagline)}</p>\n'
+        if course_meta.tagline else ""
+    )
+
+    # Table of contents
+    toc_items = [
+        f'<li><a href="#unit-{u.number}">Unit {u.number}: {_esc(u.title)}</a></li>'
+        for _folder, u, _raw in units_info
+    ]
+    toc_html = (
+        "<nav>\n"
+        "  <h2>Contents</h2>\n"
+        f'  <ol class="toc">\n    ' + "\n    ".join(toc_items) + "\n  </ol>\n"
+        "</nav>"
+    ) if toc_items else ""
+
+    # Per-unit sections
+    unit_sections: list[str] = []
+    for unit_folder, unit, raw in units_info:
+        outcomes = raw.get("learning_outcomes") or []
+        outcomes_html = ""
+        if outcomes:
+            items = "\n    ".join(f"<li>{_esc(o)}</li>" for o in outcomes)
+            outcomes_html = (
+                f'  <ul class="outcomes">\n    {items}\n  </ul>'
+            )
+
+        if unit.lessons:
+            blocks = []
+            for lesson in unit.lessons:
+                expanded = _expand_microsim_directives(lesson.body_markdown, unit.number)
+                body_html = _render_with_mermaid(md, expanded)
+                blocks.append(
+                    '  <section class="lesson">\n'
+                    f"    <h3>{_esc(lesson.title)}</h3>\n"
+                    f"{body_html}"
+                    "  </section>"
+                )
+            lessons_html = "\n".join(blocks)
+        else:
+            lessons_html = '  <p class="empty"><em>Lessons coming soon.</em></p>'
+
+        if unit.knowledge_check:
+            kc_items = "\n".join(
+                _render_question(i, q) for i, q in enumerate(unit.knowledge_check)
+            )
+            kc_html = (
+                '  <section class="kc">\n'
+                '    <h3>Knowledge Check</h3>\n'
+                f'    <ol class="kc-list">\n{kc_items}\n    </ol>\n'
+                '  </section>'
+            )
+        else:
+            kc_html = ""
+
+        unit_sections.append(
+            f'<section class="unit" id="unit-{unit.number}">\n'
+            f'  <h2>Unit {unit.number}: {_esc(unit.title)}</h2>\n'
+            f'{outcomes_html}\n'
+            f'{lessons_html}\n'
+            f'{kc_html}\n'
+            '</section>'
+        )
+
+    units_html = "\n\n".join(unit_sections) if unit_sections else (
+        '<p class="empty"><em>No units found in this course.</em></p>'
+    )
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{_esc(page_title)}</title>
+  <style>
+{_CSS}{_COURSE_CSS_OVERRIDES}</style>
+  {_MERMAID_HEAD}
+</head>
+<body id="top">
+  <div class="container">
+    <h1>{course_h1}</h1>
+{tagline_html}
+{toc_html}
+
+{units_html}
+
+    <a class="back-to-top" href="#top">Back to top &uarr;</a>
+  </div>
+  {_MERMAID_INIT}
+</body>
+</html>
+"""
+
+
+def write_course_preview(course_root: Path, output_dir: Path) -> Path:
+    """Render the course-level preview, write it to output_dir/course-preview.html,
+    and copy every unit's microsims folder to output_dir/unit-NN-microsims/.
+    Returns the path to the written HTML file.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    html = render_course_preview(course_root)
+    out_path = output_dir / "course-preview.html"
+    out_path.write_text(html, encoding="utf-8")
+
+    content_root = course_root / "content"
+    if content_root.exists():
+        for unit_folder in sorted(content_root.glob("unit-*")):
+            if not unit_folder.is_dir():
+                continue
+            unit_yaml_path = unit_folder / "unit.yaml"
+            if not unit_yaml_path.exists():
+                continue
+            meta = (yaml.safe_load(unit_yaml_path.read_text(encoding="utf-8")) or {}).get("unit", {})
+            n = int(meta.get("number", 0) or 0)
+            microsims_src = unit_folder / "microsims"
+            if microsims_src.exists() and microsims_src.is_dir():
+                microsims_dst = output_dir / f"unit-{n:02d}-microsims"
+                if microsims_dst.exists():
+                    shutil.rmtree(microsims_dst)
+                shutil.copytree(microsims_src, microsims_dst)
+
+    return out_path

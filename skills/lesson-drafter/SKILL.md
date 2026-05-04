@@ -1,3 +1,191 @@
+---
+name: lesson-drafter
+version: 1.0
+description: Draft a lesson markdown file in the course's voice, ready for human review
+inputs:
+  - unit_number: integer, required
+  - lesson_topic: string, required (a sentence describing what the lesson covers)
+  - learning_outcome: string, required (the specific outcome this lesson supports, in Bloom's verb form)
+  - target_word_count: integer, default 800
+  - target_minutes: integer, default 12 (estimated reading time)
+  - lesson_order: integer, optional (default to next available position in the unit)
+  - lesson_type: enum (text, video-script, hybrid), default text
+outputs:
+  - content/unit-NN-{slug}/lessons/NN-{lesson-slug}.md
+dependencies:
+  - course-spec-builder (course needs a spec)
+  - repo-bootstrap (course needs the folder structure)
+phase: 3
+status: ready
+subject_neutral: true
+audience_neutral: true
+---
+
 # Lesson Drafter
 
-TODO: Phase 3
+Drafts a lesson markdown file based on a topic, learning outcome, and the course's local voice guide. The output is a draft for human review, never a final.
+
+## When to Use
+
+Run this skill any time you need a new lesson drafted. Run it before the lesson exists in `content/unit-NN-{slug}/lessons/`. The skill creates a new file. It does not modify existing lessons; for that, edit the file directly.
+
+The skill respects the course's local voice guide. The same skill produces high school geology copy or adult trade training copy depending on which course it runs in.
+
+Do NOT use this skill if:
+- `voice-guide.md` has not been filled in yet (the skill needs voice instructions to produce anything coherent)
+- `course-description.md` has not been filled in (the skill needs audience and outcome context)
+
+## Steps
+
+1. Verify required inputs:
+   - `unit_number` is a positive integer
+   - `lesson_topic` is a sentence, not a single word
+   - `learning_outcome` uses a Bloom's-taxonomy upper-level verb (apply, demonstrate, evaluate, design, troubleshoot, recommend, defend, build, calibrate, diagnose). Reject weak verbs (understand, know, learn, be aware of). If the user passes a weak verb, suggest a strong replacement and ask them to confirm.
+
+2. Find the course root by walking up from cwd until course-config.yaml is found.
+
+3. Read `course-config.yaml`. Confirm the unit_number exists in the course (units field). If not, stop and tell the user.
+
+4. Read `course-description.md`. Extract:
+   - Audience summary (age range, education, domain background)
+   - Reading level target
+   - Course-level learning outcomes (so this lesson's outcome aligns with one of them)
+
+5. Read `voice-guide.md`. Extract:
+   - Audience and tone
+   - Reading level
+   - Voice personality details
+   - Influences
+   - Specific rules (especially "things never to do")
+   - Sample passages
+   - Format requirements (headers, sentence length, lesson structure)
+   
+   If voice-guide.md is unfilled or contains template placeholders, stop and tell the user the voice guide must be completed first.
+
+6. Read the unit's `unit.yaml` to get unit title and learning outcomes context.
+
+7. Read other lessons in the unit's `lessons/` folder if any exist, to understand:
+   - What topics have been covered (avoid repetition)
+   - What writing conventions the unit is using
+   - What position number to use for the new lesson
+
+8. Draft the lesson using all of the above context. The draft must:
+   - Match the voice guide exactly (tone, reading level, sentence length rules, banned phrases)
+   - Open with the bottom-line takeaway in 1 to 2 sentences
+   - Develop the topic with concrete examples and physical analogies appropriate for the audience
+   - Reference the learning outcome explicitly so the student knows what they should be able to do after
+   - Include 1 to 3 short sections under H2 headings (no H1 inside the lesson body, the H1 is the title)
+   - End with a one-sentence takeaway or transition
+   - Stay within target_word_count plus or minus 20%
+
+9. Write the lesson markdown file:
+   - File path: `content/unit-NN-{unit-slug}/lessons/{lesson-order}-{topic-slug}.md`
+   - Frontmatter at the top with title, order, type, duration_minutes
+   - Body content as the drafted lesson
+
+10. Show the user a summary:
+    - Lesson title
+    - File path created
+    - Word count
+    - Suggested next step: read the draft, revise, then commit
+
+## Output Format
+
+A markdown file with this structure:
+
+```markdown
+---
+title: "{Generated lesson title}"
+order: {N}
+type: text
+duration_minutes: {target_minutes}
+unit: {unit_number}
+learning_outcome: "{the outcome this lesson supports}"
+draft: true
+---
+
+# {Lesson Title}
+
+{Bottom-line takeaway in 1 to 2 sentences. The reader should know after this paragraph what the lesson is about and why it matters.}
+
+## {First major section}
+
+{Body paragraphs. Concrete, in the course's voice, with physical examples and analogies appropriate for the audience.}
+
+## {Second major section}
+
+{More body content. Build on the first section, do not just restate it.}
+
+## What this means for you
+
+{One short paragraph reinforcing the learning outcome. The student leaves knowing what they should be able to do.}
+
+{One-sentence transition or takeaway.}
+```
+
+The `draft: true` field in the frontmatter is a flag that the lesson has not yet been reviewed by a human. The course-validator skill (Phase 5) flags any lessons with `draft: true` as needing review before sync.
+
+## Examples
+
+### Example 1: Backstage Essentials, professionalism lesson
+
+Inputs:
+- unit_number: 1
+- lesson_topic: "How to take a call from a vendor or production company"
+- learning_outcome: "Demonstrate professional phone etiquette when receiving a call for crew work"
+- target_word_count: 700
+
+Voice context: Bill's adult trade training voice. Casual, direct, Feynman-influenced, no em dashes.
+
+Output: A 700-word lesson titled something like "The Call: How to Take One." Opens with the bottom line ("The call is the moment your reputation either gets built or broken. Here's what good crew do."). Includes specific examples (vendor names a date, what to ask, how to confirm). Ends with a one-sentence takeaway about the next lesson.
+
+### Example 2: High school geology, mineral identification lesson
+
+Inputs:
+- unit_number: 3
+- lesson_topic: "Using the Mohs hardness scale to identify minerals"
+- learning_outcome: "Apply the Mohs scale to rank an unknown mineral against reference samples"
+- target_word_count: 600
+
+Voice context: Patient explainer for 14 to 16 year olds, grade 9 reading level, clear definitions for every term.
+
+Output: A 600-word lesson opening with the takeaway ("If you can scratch one mineral with another, the one doing the scratching is harder. That's the whole idea behind the Mohs scale."). Builds with simple physical experiments students can do. Ends with a transition to the next lesson on mineral classification.
+
+## Quality Checks
+
+Before declaring the lesson drafted, verify:
+
+- The frontmatter has all required fields (title, order, type, duration_minutes, unit, learning_outcome, draft: true)
+- The body matches the voice guide (skim for banned phrases, em dashes if forbidden, sentence length, etc.)
+- The bottom line is in the first 1-2 sentences
+- The lesson references its learning outcome
+- Word count is within target_word_count plus or minus 20%
+- No content from other courses leaked in
+- No "TODO" or placeholder text in the body
+
+## Common Mistakes
+
+- **Writing in a generic voice instead of the course's voice.** The voice guide is the law. If the voice guide says "no em dashes," there are no em dashes. If the voice guide says "lead with the bottom line," the first sentence is the bottom line.
+
+- **Writing about the topic instead of producing the outcome.** A lesson that just describes a topic does not teach. The lesson must show the student doing the outcome (apply, demonstrate, etc.) by the end.
+
+- **Hedging.** Drafts that say "you might want to consider possibly thinking about" are not useful. Confident voice if the voice guide says confident voice.
+
+- **Reusing examples across lessons.** If Lesson 1 uses a particular example, Lesson 2 should not use the same example unless it is genuinely the best illustration. Read existing lessons in the unit before drafting.
+
+- **Drift in length.** A 1500-word draft when target was 700 is not a longer draft, it is a different lesson. Stay in range.
+
+- **Mixing audiences.** A lesson aimed at 14-year-olds should not have college-level vocabulary because the lesson-drafter "could." The voice guide is the constraint.
+
+## Files in This Skill Folder
+
+- `SKILL.md` (this file)
+- `voice-pattern-examples.md` (sample passages from different voices to help calibrate, since this skill needs to handle many)
+- `lesson-shape-templates.md` (different structures for text vs video-script vs hybrid lessons)
+
+## Changelog
+
+### 1.0 (2026-05-04)
+- Initial version
+- Reads voice-guide.md and course-description.md from the course repo
+- Outputs draft lessons with `draft: true` flag in frontmatter

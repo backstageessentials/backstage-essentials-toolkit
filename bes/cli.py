@@ -101,16 +101,19 @@ def status():
               type=click.Choice(["thinkific", "canvas", "google-classroom",
                                 "static-web", "pdf"]),
               help="Target platform (default: thinkific).")
+@click.option("--audience", "target_audience", default=None,
+              help="One sentence target audience description (used in CLAUDE.md).")
 @click.option("--units", "unit_count", default=6, type=int,
               help="Number of units in the course (default: 6).")
 @click.option("--path", "output_path", default=".",
               help="Where to create the course folder (default: current directory).")
-def new_course(course_name: str, target_platform: str, unit_count: int,
-                output_path: str):
+def new_course(course_name: str, target_platform: str, target_audience: str,
+                unit_count: int, output_path: str):
     """Bootstrap a new course folder with build spec and folder structure."""
     sys.exit(new_course_cmd.run(
         course_name=course_name,
         target_platform=target_platform,
+        target_audience=target_audience,
         unit_count=unit_count,
         output_path=output_path,
     ))

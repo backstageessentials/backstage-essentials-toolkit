@@ -1,0 +1,80 @@
+# {COURSE_NAME}
+
+This file is the course's orchestration playbook. Claude Code reads it automatically when started in this folder, so anything here is durable instruction for any Claude Code instance running in this course.
+
+## Identity
+
+- **Course name:** {COURSE_NAME}
+- **Course slug:** {COURSE_SLUG}
+- **Target platform:** {TARGET_PLATFORM}
+- **Target audience:** {TARGET_AUDIENCE}
+
+This course was scaffolded by the [Backstage Essentials Course Builder Toolkit](../backstage-essentials-toolkit). The toolkit's `CLAUDE.md` covers the broader orchestration pattern (which `bes` command to run for which task, how to execute the structured prompts those commands emit, when to commit and push without asking). Read both files. The toolkit file owns the orchestration glue; this file owns the course specific rules.
+
+## Voice
+
+The authoritative source for voice in this course is `voice-guide.md` at the course root. Always read it before generating any content. The patterns and examples there override any defaults from the toolkit.
+
+If `voice-guide.md` is empty or contains template placeholders, stop and tell the user it must be completed before any lesson, quiz, or final can be drafted. Do not invent a voice.
+
+## Course Specific Files
+
+| File | Purpose |
+|------|---------|
+| `course-description.md` | Audience, learning outcomes, scope. Read first before any other skill. |
+| `voice-guide.md` | Authoritative voice rules for this course. Read before drafting any content. |
+| `docs/build-spec.md` | The technical build spec: folder structure, file formats, sync notes, platform API notes. |
+| `content/` | One folder per unit. Each unit has `unit.yaml`, `lessons/*.md`, `knowledge-check.yaml`, and optionally `microsims/*.html`. |
+| `exam/course-final.yaml` | The course final assessment question bank. |
+| `preview/` | Generated HTML previews. Regenerate via the toolkit's static-web preview generator. |
+| `scripts/` | Sync and validation scripts written by the toolkit at bootstrap time. |
+
+## Standing Voice Rules
+
+These apply to every lesson, every question, every prose line in this course. The course `voice-guide.md` may add to or override these; if there is a conflict, the voice guide wins.
+
+- **No em dashes, no en dashes, no hyphens used as separators in prose.** Use commas, colons, periods, or rephrase. Hyphens in compound words (load in, sound check, FOH engineer) are fine when the term itself uses one.
+- **Casual, direct, Feynman influenced voice.** Clarity, mechanism, real time thinking out loud. Bottom line first sentence in every lesson.
+- **Plain text questions only.** No markdown styling inside question text. No bold, no italics, no inline code in the question itself. The student should be reading the question, not parsing formatting.
+- **One question per response when possible.** When you ask the user something, default to one focused question. Do not stack three questions in a single message and expect a clean answer.
+- **Default to trim.** Whichever version is shorter, use that one, unless the longer version is genuinely clearer.
+
+## Course Final Rendering Rule
+
+The course final assessment for this course is rendered with these defaults:
+
+- **Bank size:** 200 questions total.
+- **Per attempt:** 100 questions sampled from the bank.
+- **Pass threshold:** 75 percent.
+- **Format:** multiple choice. The student selects an answer, submits, then sees the correct answer and the explanation revealed afterward.
+- **Difficulty mix:** roughly 30 percent easy, 50 percent medium, 20 percent hard, unless the build spec for this course says otherwise.
+
+If a sync target needs different settings (a Thinkific quiz limit, for example), document the deviation in `docs/build-spec.md` and reflect it in `exam/course-final.yaml`.
+
+## When the User Asks for Course Work
+
+Follow the toolkit's orchestration pattern from `../backstage-essentials-toolkit/CLAUDE.md`:
+
+1. Run the appropriate `bes` command via Bash.
+2. Capture the structured prompt the command prints.
+3. Execute the prompt directly: read the relevant skill in the toolkit's `skills/` folder, draft the content per the skill's procedure, write the output file.
+4. Show the resulting file or preview for review.
+5. Commit and push without waiting for an explicit ask.
+
+Do not hand the prompt back to the user to paste. The bes prompt is for you, not for them.
+
+## Useful Commands From This Folder
+
+```
+bes status              # what is pending
+bes validate            # lint the course
+bes new-lesson          # draft one lesson interactively
+bes new-quiz            # generate a unit's knowledge check
+bes add-diagrams        # add Mermaid diagrams to existing lessons
+bes add-microsim        # add an interactive HTML widget to a lesson
+bes build-final         # generate the course final question bank
+bes commit              # commit pending changes
+bes push                # push to GitHub
+```
+
+Run `bes <command> --help` for the flags each one accepts.

@@ -1,13 +1,12 @@
 """bes new-course command.
 
 Bootstraps a new course repo by orchestrating course-spec-builder and
-repo-bootstrap skills. Outputs a structured prompt the user pastes into
-Claude Code to do the actual work.
-
-Why prompts instead of direct execution: the skills do creative writing
-(course descriptions, learning outcomes, etc.) that needs an LLM. bes
-itself does not call LLM APIs; Claude Code does. So bes prepares the
-context and the prompt, the user runs Claude Code with that prompt.
+repo-bootstrap skills. Drops a course specific CLAUDE.md immediately so
+any Claude Code instance opened in the new folder learns how to drive
+the toolkit, even before the rest of the scaffolding is filled in. The
+remaining work (build spec, repo bootstrap, voice guide stub) is
+described in the structured prompt this command prints; Claude Code
+runs it.
 """
 
 import sys
@@ -19,14 +18,23 @@ from rich.console import Console
 console = Console()
 
 
+_TEMPLATE_PATH = (
+    Path(__file__).resolve().parent.parent.parent
+    / "skills"
+    / "repo-bootstrap"
+    / "templates"
+    / "course-claude.template.md"
+)
+
+
 def run(course_name: str = None, target_platform: str = None,
-        unit_count: int = 6, output_path: str = None) -> int:
+        unit_count: int = 6, output_path: str = None,
+        target_audience: str = None) -> int:
     """Run new-course command. Returns exit code."""
     if output_path is None:
         output_path = "."
     output_path = Path(output_path).resolve()
 
-    # If we are not given a course name, prompt
     if not course_name:
         course_name = click.prompt("Course name", type=str)
     if not target_platform:
@@ -36,12 +44,16 @@ def run(course_name: str = None, target_platform: str = None,
                               "static-web", "pdf"]),
             default="thinkific",
         )
+    if not target_audience:
+        target_audience = click.prompt(
+            "Target audience (one short sentence)",
+            type=str,
+            default="To be filled in from course-description.md.",
+        )
 
-    # Slug derived from course name unless user wants to override
     default_slug = course_name.lower().replace(" ", "-")
     course_slug = click.prompt("Course slug", type=str, default=default_slug)
 
-    # Verify the target folder is empty or new
     target = output_path / course_slug
     if target.exists() and any(target.iterdir()):
         if not click.confirm(
@@ -53,7 +65,14 @@ def run(course_name: str = None, target_platform: str = None,
 
     target.mkdir(parents=True, exist_ok=True)
 
-    # Generate the prompt for Claude Code
+    claude_md_path = _write_course_claude_md(
+        target=target,
+        course_name=course_name,
+        course_slug=course_slug,
+        target_platform=target_platform,
+        target_audience=target_audience,
+    )
+
     prompt = _build_new_course_prompt(
         course_name=course_name,
         course_slug=course_slug,
@@ -64,12 +83,14 @@ def run(course_name: str = None, target_platform: str = None,
 
     console.print()
     console.print(f"[green]Course folder created:[/green] {target}")
+    if claude_md_path is not None:
+        console.print(f"[green]Course CLAUDE.md written:[/green] {claude_md_path}")
     console.print()
     console.print("[cyan]Next: paste this prompt into Claude Code[/cyan]")
     console.print(f"[cyan](in the {target} folder, type 'claude' first):[/cyan]")
     console.print()
     console.print("=" * 70)
-    console.print(prompt)
+    console.print(prompt, markup=False, highlight=False)
     console.print("=" * 70)
     console.print()
     console.print("[yellow]After Claude Code finishes, review the generated files,[/yellow]")
@@ -79,12 +100,40 @@ def run(course_name: str = None, target_platform: str = None,
     return 0
 
 
+def _write_course_claude_md(target: Path, course_name: str, course_slug: str,
+                             target_platform: str, target_audience: str) -> Path:
+    """Render the course CLAUDE.md template and write it to target/CLAUDE.md.
+
+    Returns the written path. Returns None if the template is missing
+    (in which case we print a warning and let the rest of the bootstrap
+    continue).
+    """
+    if not _TEMPLATE_PATH.exists():
+        console.print(
+            f"[yellow]Template missing at {_TEMPLATE_PATH}; "
+            "skipping CLAUDE.md drop.[/yellow]"
+        )
+        return None
+    template = _TEMPLATE_PATH.read_text(encoding="utf-8")
+    rendered = (
+        template
+        .replace("{COURSE_NAME}", course_name)
+        .replace("{COURSE_SLUG}", course_slug)
+        .replace("{TARGET_PLATFORM}", target_platform)
+        .replace("{TARGET_AUDIENCE}", target_audience)
+    )
+    out = target / "CLAUDE.md"
+    out.write_text(rendered, encoding="utf-8")
+    return out
+
+
 def _build_new_course_prompt(course_name: str, course_slug: str,
                               target_platform: str, unit_count: int,
                               target_path: Path) -> str:
     """Build the prompt for Claude Code to bootstrap the course."""
     return f"""I want to create a new course using the toolkit. Run the course-spec-builder \
-and repo-bootstrap skills in sequence to scaffold it.
+and repo-bootstrap skills in sequence to scaffold it. The new-course command has already \
+created the target folder and dropped a course CLAUDE.md; do not overwrite that file.
 
 Inputs:
 - course_name: "{course_name}"
@@ -99,7 +148,8 @@ docs/build-spec.md and docs/build-spec-source/build-spec.docx in the course fold
 
 2. Read the repo-bootstrap SKILL.md from the toolkit and follow it to scaffold the \
 folder structure (course-config.yaml, .gitignore, .env.example, requirements.txt, README.md, \
-content/ folder with {unit_count} unit subfolders, exam/, scripts/, etc.).
+content/ folder with {unit_count} unit subfolders, exam/, scripts/, etc.). Do not write or \
+overwrite CLAUDE.md; new-course already wrote it.
 
 3. Create empty placeholder course-description.md and voice-guide.md at the course root, \
 with template content from docs/course-description-guide.md and docs/voice-guide-template.md \

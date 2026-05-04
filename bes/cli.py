@@ -22,6 +22,7 @@ from .commands import new_lesson as new_lesson_cmd
 from .commands import new_quiz as new_quiz_cmd
 from .commands import build_final as build_final_cmd
 from .commands import build_course as build_course_cmd
+from .commands import add_diagrams as add_diagrams_cmd
 
 console = Console()
 
@@ -157,6 +158,31 @@ def new_quiz(unit_number: int, num_questions: int, assessment_style: str,
         num_questions=num_questions,
         assessment_style=assessment_style,
         difficulty_mix=difficulty_mix,
+    ))
+
+
+@main.command(name="add-diagrams")
+@click.option("--unit", "unit_number", default=None, type=int,
+              help="Unit number to add diagrams to. Omit for an interactive prompt that defaults to all units.")
+@click.option("--max-per-lesson", "max_diagrams_per_lesson", default=3, type=int,
+              help="Maximum diagrams to add per lesson (default: 3).")
+@click.option("--min-per-lesson", "min_diagrams_per_lesson", default=1, type=int,
+              help="Minimum diagrams target per lesson; the skill may still skip a lesson if no spot earns one (default: 1).")
+@click.option("--types", "allowed_types",
+              default="flowchart,sequence,state,class",
+              help="Comma-separated list of allowed Mermaid types.")
+@click.option("--lesson-filter", "lesson_filter", default=None,
+              help='Glob to limit which lessons get diagrams, e.g. "01-*.md".')
+def add_diagrams(unit_number: int, max_diagrams_per_lesson: int,
+                  min_diagrams_per_lesson: int, allowed_types: str,
+                  lesson_filter: str):
+    """Add Mermaid diagrams to existing lessons via the diagram-builder skill."""
+    sys.exit(add_diagrams_cmd.run(
+        unit_number=unit_number,
+        max_diagrams_per_lesson=max_diagrams_per_lesson,
+        min_diagrams_per_lesson=min_diagrams_per_lesson,
+        allowed_types=allowed_types,
+        lesson_filter=lesson_filter,
     ))
 
 

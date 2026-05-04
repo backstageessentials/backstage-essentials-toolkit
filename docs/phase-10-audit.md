@@ -136,7 +136,9 @@ A few audit findings were intentionally left in place:
 
 ## Validation Plan
 
-Phase 10 Part 2 builds a US History sample course exercising every toolkit feature. If the audit is complete, Part 2 should run without surfacing any new toolkit fixes. If Part 2 surfaces new findings, the audit will be amended.
+Phase 10 Part 2 was originally scoped to build a US History sample course exercising every toolkit feature, with the goal of catching any audit miss. Bill skipped Part 2 on review of this audit, judging that the structural fixes covered the surface area Part 2 would have stressed: a sample course would have re-surfaced the per-course CLAUDE.md template (fixed), the headline Bloom verb list (fixed), the canonical MicroSim Customize blocks (fixed), the canonical diagram examples (fixed), and the build-spec visual_aids placeholders (fixed). With no remaining surface to stress, building a sample course was deemed unnecessary cost.
+
+If a real non-trade course is built later and surfaces a new finding, this audit will be amended.
 
 ## Authoring Note
 

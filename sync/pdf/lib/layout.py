@@ -231,7 +231,8 @@ def _render_with_demoted_headings(md: MarkdownIt, text: str,
 
 
 def _render_lesson(md: MarkdownIt, lesson: Lesson, unit_number: int,
-                    course: CourseInfo, mermaid_cache: Path,
+                    lesson_index: int, course: CourseInfo,
+                    mermaid_cache: Path,
                     screenshot_dir: Optional[Path]) -> str:
     """Render one lesson as a `<section class="lesson">` block."""
     body = lesson.body_markdown
@@ -252,8 +253,9 @@ def _render_lesson(md: MarkdownIt, lesson: Lesson, unit_number: int,
             f'{lesson.duration_minutes} minutes</p>'
         )
 
+    lesson_id = f"lesson-{unit_number}-{lesson_index}"
     return (
-        '<section class="lesson">\n'
+        f'<section class="lesson" id="{lesson_id}">\n'
         f'  <h3>{_esc(lesson.title)}</h3>\n'
         f'  {duration_html}\n'
         f'  {body_html}\n'
@@ -320,8 +322,8 @@ def _render_unit(md: MarkdownIt, unit: Unit, course: CourseInfo,
         description_html = f'  <p class="unit-description">{_esc(unit.description)}</p>'
 
     lessons_html = "\n".join(
-        _render_lesson(md, lesson, unit.number, course, mermaid_cache, screenshot_dir)
-        for lesson in unit.lessons
+        _render_lesson(md, lesson, unit.number, i, course, mermaid_cache, screenshot_dir)
+        for i, lesson in enumerate(unit.lessons, 1)
     ) or '  <p><em>Lessons coming soon.</em></p>'
 
     kc_html = ""
@@ -394,7 +396,8 @@ def _render_toc(units: list[Unit], include_final: bool) -> str:
             rows.append(
                 f'  <li class="toc-lesson">\n'
                 f'    <div class="toc-row">\n'
-                f'      <span>{unit.number}.{i} {_esc(lesson.title)}</span>\n'
+                f'      <a class="toc-link" href="#lesson-{unit.number}-{i}">'
+                f'{unit.number}.{i} {_esc(lesson.title)}</a>\n'
                 f'      <span class="toc-leader"></span>\n'
                 f'      <span class="toc-page"></span>\n'
                 f'    </div>\n'

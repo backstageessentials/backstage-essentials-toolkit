@@ -6,7 +6,7 @@ inputs:
   - build_spec_path: file_path, required, default ./docs/build-spec.md
   - course_description_path: file_path, required, default ./course-description.md
   - voice_guide_path: file_path, optional, default ./voice-guide.md
-  - target_platform: enum (thinkific, canvas, google-classroom, static-web, pdf), required
+  - target_platform: enum (thinkific, canvas, talentlms, google-classroom, static-web, pdf), required
   - unit_count: integer, default 6
   - unit_titles: list of strings, optional
   - confirm_before_writing: boolean, default true
@@ -191,6 +191,15 @@ CANVAS_API_TOKEN=your_api_token_here
 ```
 
 For Canvas, also add `canvas_account_id: <id>` to course-config.yaml under the `course:` block. The validator refuses to sync a Canvas course without it.
+
+### .env.example (TalentLMS example)
+
+```
+TALENTLMS_API_URL=https://your-domain.talentlms.com
+TALENTLMS_API_KEY=your_api_key_here
+```
+
+TalentLMS scopes everything to the API key's account, so course-config.yaml needs no extra ID field. The course is created on first sync and tracked in sync-state.json.
 
 ### .env.example (PDF example)
 

@@ -42,4 +42,10 @@ course:
   #   pdf_include_final: false         # true to embed the course final at the
   #                                    # back of the PDF (questions only;
   #                                    # answers are hidden via CSS).
+  #
+  # TalentLMS:
+  #   No course_id field needed. TalentLMS scopes everything to the API
+  #   key's account. Set platform: "talentlms" and put TALENTLMS_API_URL
+  #   and TALENTLMS_API_KEY in .env. The sync creates the course on first
+  #   run and tracks the course_id in sync-state.json after that.
 {PLATFORM_FIELDS}

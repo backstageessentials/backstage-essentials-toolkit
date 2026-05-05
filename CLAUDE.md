@@ -117,7 +117,7 @@ When you run `bes new-course`, run it from `~/Code` so the new folder lands as a
 
 ## Standing Reference
 
-- The toolkit's plan and roadmap docs are in `docs/`. The Visual Aids Roadmap (`docs/Backstage_Essentials_Toolkit_VisualAidsRoadmap.docx`) covers the Phase 6 and Phase 7 visual content work that is now complete.
+- The toolkit's plan and roadmap docs are in `docs/`. The Visual Aids Roadmap (`docs/Backstage_Essentials_Toolkit_VisualAidsRoadmap.docx`) covers the Phase 6 and Phase 7 visual content work that is now complete. The Phase 14 spec (`docs/Backstage_Essentials_Toolkit_Phase14_RetestLogic.docx`) covers the retest logic and overlap rules now wired into the schema, validator, static-web target, and LMS targets.
 - Examples live in `examples/`. The `sample-course-with-diagrams/` example shows what good Mermaid and a formula MicroSim look like in real lesson context.
 - The reference implementation course is `live-event-technician-test-course/` (sibling folder, not in this repo).
 

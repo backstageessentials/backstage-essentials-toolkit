@@ -129,6 +129,27 @@ The CDN approach assumes the reviewer has internet when they open the preview. T
 
 For truly offline / air-gapped previews, swap in a build-time pre-render via `@mermaid-js/mermaid-cli`. The renderer detects a `--prerender` flag and substitutes inline SVG in place of the `.mermaid` div. This is documented in `lib/preview.py` but not the default path.
 
+## Final Assessment Retest Behavior (Phase 14)
+
+When the rendered course final has the Phase 14 fields set (or relies on defaults), the test-mode JS:
+
+- Reads prior attempts from `localStorage` under `course-{slug}-final-attempts`.
+- Shows "Attempt N of M" once max_attempts is greater than 1.
+- Samples questions for each attempt with overlap-aware logic: prefer entirely fresh questions, fall back to a capped reuse pool when the bank is too small, and prefer previously-wrong questions when reuse is unavoidable.
+- After submit, appends a record `{ attempt_number, question_ids, wrong_ids, score, passed, timestamp }` to localStorage and shows a retake button if attempts remain.
+- After max_attempts is hit, hides the form and shows the configured `retest_lockout_message`.
+
+### Author tools
+
+- `?reset=true` clears the localStorage attempt record on page load. Useful while testing the page.
+- `?author=true` reveals a small Reset button at the bottom of the section. Clicking it clears localStorage and reloads.
+
+### Limitations
+
+- localStorage is client-controlled. A determined student can clear browser data to reset attempts. For real assessment integrity use the LMS targets (Thinkific, Canvas) that track attempts server-side.
+- `attempts_persist_across_sessions: false` in the YAML disables localStorage entirely. Each page load is a fresh attempt with no overlap enforcement.
+- The retest sampler is a best-effort algorithm. If the validator warned that the configured (bank, per-attempt, attempts, overlap) is mathematically impossible, late attempts may serve fewer than `questions_per_attempt` questions because the constraint takes priority over the count.
+
 ## Thinkific Note
 
 Thinkific's lesson sandbox may strip or sandbox the `<script>` tag for the Mermaid CDN, so on Thinkific the recommended pattern is to pre-render Mermaid to inline SVG before pushing. The Thinkific sync target handles that conversion at sync time. The static-web preview pipeline does not need that conversion since it runs in a normal browser.
@@ -150,3 +171,10 @@ Thinkific's lesson sandbox may strip or sandbox the `<script>` tag for the Merma
   collapsible knowledge-check pattern from the test course's preview.
 - Mermaid blocks render as `<div class="mermaid">` so the Mermaid library
   turns them into SVG client-side.
+
+### 0.3 (2026-05-05, Phase 14)
+- Final assessment honors `max_attempts`, `max_overlap_percentage`,
+  `retest_lockout_message`, and `attempts_persist_across_sessions`.
+- Overlap-aware sampling, localStorage-backed attempt tracking,
+  attempt counter, retake/lockout UI, and `?reset=true` / `?author=true`
+  query params for course-author testing.

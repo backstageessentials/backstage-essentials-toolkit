@@ -41,6 +41,7 @@ _FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n(.*)", re.DOTALL)
 class CourseMeta:
     course_name: str
     tagline: str = ""
+    course_slug: str = ""
 
 
 @dataclass
@@ -215,6 +216,7 @@ def _load_course_meta(course_root: Path) -> CourseMeta:
     config = (yaml.safe_load((course_root / "course-config.yaml").read_text(encoding="utf-8")) or {})
     course = config.get("course", {})
     name = course.get("name", "Course")
+    slug = course.get("slug", "")
 
     tagline = ""
     desc_path = course_root / "course-description.md"
@@ -226,7 +228,7 @@ def _load_course_meta(course_root: Path) -> CourseMeta:
                 continue
             tagline = stripped.replace("\n", " ")
             break
-    return CourseMeta(course_name=name, tagline=tagline)
+    return CourseMeta(course_name=name, tagline=tagline, course_slug=slug)
 
 
 # --------------------------------------------------------------------------
@@ -470,6 +472,31 @@ details > p:first-of-type { margin-top: 0.6em; }
   background: rgba(214, 0, 108, 0.03);
   text-align: center; color: var(--muted);
 }
+.test-attempt-counter {
+  font-size: 0.95rem; color: var(--brand); font-weight: 600;
+  margin: 0 0 0.6em 0;
+}
+.test-lockout {
+  padding: 18px; border-radius: 8px; border: 1px solid var(--rule);
+  background: rgba(187, 0, 0, 0.05); color: #BB0000;
+  margin: 1em 0;
+}
+.test-lockout-message { margin: 0; font-weight: 500; }
+.test-retry-prompt {
+  font-size: 0.95rem; color: var(--muted); margin: 0.8em 0 0.4em 0;
+}
+.test-retry-btn {
+  font-family: inherit; font-size: 0.95rem; font-weight: 700;
+  padding: 10px 18px; border-radius: 6px; cursor: pointer;
+  background: var(--brand); color: var(--bg); border: none;
+  margin-right: 0.6em;
+}
+.test-reset-btn {
+  font-family: inherit; font-size: 0.85rem;
+  padding: 6px 12px; border-radius: 4px; cursor: pointer;
+  background: var(--bg); color: var(--muted); border: 1px solid var(--rule);
+  margin-top: 1em;
+}
 """
 
 _MERMAID_HEAD = '<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>'
@@ -621,6 +648,8 @@ def _render_test_question(idx: int, q: dict, q_id: str) -> str:
 _TEST_MODE_JS = """\
 <script>
 (function () {
+  // Phase 14: localStorage-backed retest tracking with overlap-aware sampling.
+
   document.querySelectorAll('.test-section').forEach(function (section) {
     initTestSection(section);
   });
@@ -633,24 +662,128 @@ _TEST_MODE_JS = """\
     return arr;
   }
 
+  function readAttempts(section) {
+    var key = section.dataset.storageKey || '';
+    var persist = section.dataset.persistAttempts !== 'false';
+    if (!key || !persist) return [];
+    try {
+      var raw = window.localStorage.getItem(key);
+      if (!raw) return [];
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function writeAttempts(section, attempts) {
+    var key = section.dataset.storageKey || '';
+    var persist = section.dataset.persistAttempts !== 'false';
+    if (!key || !persist) return;
+    try {
+      window.localStorage.setItem(key, JSON.stringify(attempts));
+    } catch (e) {}
+  }
+
+  function clearAttempts(section) {
+    var key = section.dataset.storageKey || '';
+    if (!key) return;
+    try { window.localStorage.removeItem(key); } catch (e) {}
+  }
+
+  // Pick the question set for the current attempt given prior attempts.
+  // Strategy: prefer fully-fresh sample; if fresh pool is too small, fill
+  // with overlap up to floor(maxOverlap * perAttempt), preferring questions
+  // the student answered wrong on prior attempts.
+  function sampleForAttempt(allQIds, perAttempt, priorAttempts, maxOverlap) {
+    var seen = {};
+    var wrongSet = {};
+    priorAttempts.forEach(function (a) {
+      (a.question_ids || []).forEach(function (qid) { seen[qid] = true; });
+      (a.wrong_ids || []).forEach(function (qid) { wrongSet[qid] = true; });
+    });
+    var fresh = allQIds.filter(function (qid) { return !seen[qid]; });
+    var overlap = allQIds.filter(function (qid) { return seen[qid]; });
+    shuffle(fresh);
+    shuffle(overlap);
+
+    if (fresh.length >= perAttempt) {
+      return fresh.slice(0, perAttempt);
+    }
+    var overlapCap = Math.floor(maxOverlap * perAttempt);
+    var needed = perAttempt - fresh.length;
+    var overlapCount = Math.min(needed, overlapCap, overlap.length);
+    // Prefer previously-wrong questions when we must reuse.
+    overlap.sort(function (a, b) {
+      var aw = wrongSet[a] ? 0 : 1;
+      var bw = wrongSet[b] ? 0 : 1;
+      return aw - bw;
+    });
+    var chosen = fresh.concat(overlap.slice(0, overlapCount));
+    // If we still cannot fill perAttempt, return what we have rather than
+    // breaking the constraint. The validator should have caught this case.
+    return chosen;
+  }
+
   function initTestSection(section) {
     var perAttempt = parseInt(section.dataset.perAttempt, 10) || 0;
     var passThreshold = parseFloat(section.dataset.passThreshold) || 0;
+    var maxAttempts = parseInt(section.dataset.maxAttempts, 10) || 1;
+    var maxOverlap = parseFloat(section.dataset.maxOverlap);
+    if (isNaN(maxOverlap)) maxOverlap = 0.10;
+    var lockoutMessage = section.dataset.lockoutMessage || '';
+
     var allQuestions = Array.prototype.slice.call(
       section.querySelectorAll('.test-question')
     );
     if (allQuestions.length === 0) return;
 
-    // Random sample: hide questions beyond perAttempt
-    var perAttemptShown = perAttempt > 0
-      ? Math.min(perAttempt, allQuestions.length)
-      : allQuestions.length;
-    var indices = allQuestions.map(function (_, i) { return i; });
-    shuffle(indices);
+    var qById = {};
+    var allQIds = allQuestions.map(function (q) {
+      var qid = q.dataset.qId;
+      qById[qid] = q;
+      return qid;
+    });
+
+    // Honor ?reset=true for course authors testing the page.
+    if (/\\b[?&]reset=true\\b/.test(window.location.search)) {
+      clearAttempts(section);
+    }
+
+    var attempts = readAttempts(section);
+
+    // Always show the reset button when localStorage is in use; it stays
+    // hidden by default but a query param flips it on so authors can wipe
+    // saved state without dev tools.
+    var resetBtn = section.querySelector('.test-reset-btn');
+    if (resetBtn && /\\b[?&]author=true\\b/.test(window.location.search)) {
+      resetBtn.hidden = false;
+      resetBtn.addEventListener('click', function () {
+        clearAttempts(section);
+        window.location.reload();
+      });
+    }
+
+    // Lockout: at or above max_attempts.
+    if (attempts.length >= maxAttempts && maxAttempts >= 1) {
+      renderLockout(section, lockoutMessage, attempts);
+      return;
+    }
+
+    var attemptNumber = attempts.length + 1;
+    showAttemptCounter(section, attemptNumber, maxAttempts);
+
+    // Sample questions for this attempt.
+    var picked = sampleForAttempt(
+      allQIds,
+      Math.min(perAttempt, allQIds.length),
+      attempts,
+      maxOverlap
+    );
     var pickedSet = {};
-    for (var i = 0; i < perAttemptShown; i++) pickedSet[indices[i]] = true;
-    allQuestions.forEach(function (q, i) {
-      if (!pickedSet[i]) {
+    picked.forEach(function (qid) { pickedSet[qid] = true; });
+    allQuestions.forEach(function (q) {
+      if (!pickedSet[q.dataset.qId]) {
         q.style.display = 'none';
         q.classList.add('not-picked');
       }
@@ -662,7 +795,7 @@ _TEST_MODE_JS = """\
 
     var progressEl = section.querySelector('.test-progress-text');
     var totalText = section.querySelector('.test-progress-total');
-    if (totalText) totalText.textContent = perAttemptShown;
+    if (totalText) totalText.textContent = visible.length;
     updateProgress();
 
     section.addEventListener('change', function (e) {
@@ -684,12 +817,15 @@ _TEST_MODE_JS = """\
     var scoreEl = section.querySelector('.test-results-panel .score');
     var pctEl = section.querySelector('.test-results-panel .pct');
     var passfailEl = section.querySelector('.test-passfail');
+    var retryPrompt = section.querySelector('.test-retry-prompt');
+    var retryBtn = section.querySelector('.test-retry-btn');
 
     if (form) {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         var correct = 0;
         var thresholdPct = Math.round(passThreshold * 100);
+        var wrongIds = [];
         visible.forEach(function (q) {
           var raw = (q.dataset.correctIndices || '').split(',').filter(Boolean);
           var correctSet = {};
@@ -700,14 +836,16 @@ _TEST_MODE_JS = """\
             q.dataset.outcome = 'right';
           } else {
             q.dataset.outcome = picked ? 'wrong' : 'unanswered';
+            wrongIds.push(q.dataset.qId);
           }
         });
         var total = visible.length;
         var pct = total > 0 ? correct / total : 0;
+        var passed = pct >= passThreshold;
         if (scoreEl) scoreEl.textContent = correct + ' of ' + total;
         if (pctEl) pctEl.textContent = Math.round(pct * 100) + ' percent';
         if (passfailEl) {
-          if (pct >= passThreshold) {
+          if (passed) {
             passfailEl.textContent = 'Passed (threshold ' + thresholdPct + ' percent)';
             passfailEl.className = 'test-passfail pass';
           } else {
@@ -715,6 +853,18 @@ _TEST_MODE_JS = """\
             passfailEl.className = 'test-passfail fail';
           }
         }
+
+        // Persist this attempt.
+        var record = {
+          attempt_number: attemptNumber,
+          question_ids: visible.map(function (q) { return q.dataset.qId; }),
+          wrong_ids: wrongIds,
+          score: pct,
+          passed: passed,
+          timestamp: new Date().toISOString()
+        };
+        attempts.push(record);
+        writeAttempts(section, attempts);
 
         // Hide form, show results
         form.querySelectorAll('.test-question').forEach(function (q) {
@@ -724,6 +874,33 @@ _TEST_MODE_JS = """\
         var progressBar = section.querySelector('.test-progress');
         if (progressBar) progressBar.style.display = 'none';
         if (resultsPanel) resultsPanel.hidden = false;
+
+        // Retest prompt or final lockout.
+        var attemptsLeft = maxAttempts - attempts.length;
+        if (passed) {
+          if (retryPrompt) {
+            retryPrompt.textContent = 'You passed. Retests are not required.';
+            retryPrompt.hidden = false;
+          }
+        } else if (attemptsLeft > 0) {
+          if (retryPrompt) {
+            retryPrompt.textContent =
+              'You can retake this exam. ' + attemptsLeft + ' attempt' +
+              (attemptsLeft === 1 ? '' : 's') + ' remaining.';
+            retryPrompt.hidden = false;
+          }
+          if (retryBtn) {
+            retryBtn.hidden = false;
+            retryBtn.addEventListener('click', function () {
+              window.location.reload();
+            });
+          }
+        } else {
+          if (retryPrompt) {
+            retryPrompt.textContent = lockoutMessage;
+            retryPrompt.hidden = false;
+          }
+        }
       });
     }
 
@@ -754,20 +931,54 @@ _TEST_MODE_JS = """\
       });
     }
   }
+
+  function renderLockout(section, message, attempts) {
+    var form = section.querySelector('.test-form');
+    if (form) form.style.display = 'none';
+    var lockoutEl = section.querySelector('.test-lockout');
+    var msgEl = section.querySelector('.test-lockout-message');
+    if (msgEl) msgEl.textContent = message;
+    if (lockoutEl) lockoutEl.hidden = false;
+    var counter = section.querySelector('.test-attempt-counter');
+    if (counter) {
+      counter.textContent = 'Used ' + attempts.length + ' of ' +
+        (parseInt(section.dataset.maxAttempts, 10) || attempts.length) + ' attempts.';
+      counter.hidden = false;
+    }
+  }
+
+  function showAttemptCounter(section, attemptNumber, maxAttempts) {
+    var counter = section.querySelector('.test-attempt-counter');
+    if (!counter) return;
+    if (maxAttempts > 1) {
+      counter.textContent = 'Attempt ' + attemptNumber + ' of ' + maxAttempts + '.';
+      counter.hidden = false;
+    }
+  }
 })();
 </script>
 """
 
 
+_DEFAULT_LOCKOUT_MESSAGE = (
+    "You have used all available attempts. Please contact your "
+    "instructor if you need additional review."
+)
+
+
 def render_test_section(quiz_data: dict, section_id: str = "course-final-test",
                          heading: str = "Final Assessment",
-                         intro: Optional[str] = None) -> str:
+                         intro: Optional[str] = None,
+                         course_slug: str = "") -> str:
     """Return the HTML for a test-mode quiz section.
 
     quiz_data is the inner dict from the YAML (the value under final_assessment:
     or quiz:). The renderer:
-    - Embeds every question in the page; an inline JS shuffle hides any
-      beyond questions_per_attempt on each load.
+    - Embeds every question in the page. The inline JS samples
+      `questions_per_attempt` on each load, with attempt-aware overlap rules
+      enforced when Phase 14 retest fields are present.
+    - Tracks attempts in localStorage under `course-{slug}-final-attempts`
+      when course_slug is provided and attempts_persist_across_sessions is true.
     - Handles small or empty banks gracefully via min(bank, per_attempt).
     """
     questions = quiz_data.get("questions") or []
@@ -778,6 +989,33 @@ def render_test_section(quiz_data: dict, section_id: str = "course-final-test",
         pass_threshold = float(pass_threshold)
     except (TypeError, ValueError):
         pass_threshold = 0.75
+
+    # Phase 14 retest fields with sensible defaults.
+    try:
+        max_attempts = int(quiz_data.get("max_attempts", 3))
+    except (TypeError, ValueError):
+        max_attempts = 3
+    if max_attempts < 1:
+        max_attempts = 1
+
+    try:
+        max_overlap = float(quiz_data.get("max_overlap_percentage", 0.10))
+    except (TypeError, ValueError):
+        max_overlap = 0.10
+    if max_overlap < 0:
+        max_overlap = 0.0
+    elif max_overlap > 1:
+        max_overlap = 1.0
+
+    persist_raw = quiz_data.get("attempts_persist_across_sessions", True)
+    persist = bool(persist_raw) if persist_raw is not None else True
+
+    lockout_msg_raw = quiz_data.get("retest_lockout_message")
+    if lockout_msg_raw:
+        # Collapse newlines/whitespace so the message fits in an HTML attribute.
+        lockout_message = " ".join(str(lockout_msg_raw).split()).strip()
+    else:
+        lockout_message = _DEFAULT_LOCKOUT_MESSAGE
 
     if bank_size == 0:
         return (
@@ -811,12 +1049,17 @@ def render_test_section(quiz_data: dict, section_id: str = "course-final-test",
         )
     else:
         meta_lines.append(
-            f"Test mode. Each load samples {per_attempt} of "
-            f"{bank_size} bank questions. Refresh for a new set."
+            f"Test mode. Each attempt samples {per_attempt} of "
+            f"{bank_size} bank questions."
         )
     meta_lines.append(
         f"Pass threshold: {round(pass_threshold * 100)} percent."
     )
+    if max_attempts > 1:
+        meta_lines.append(
+            f"Up to {max_attempts} attempts; retests overlap at most "
+            f"{round(max_overlap * 100)} percent with prior attempts."
+        )
     meta_html = "<br>\n".join(_esc(line) for line in meta_lines)
 
     intro_html = ""
@@ -830,12 +1073,23 @@ def render_test_section(quiz_data: dict, section_id: str = "course-final-test",
         question_blocks.append(_render_test_question(i, q, _safe_q_id(q_id)))
     questions_html = "\n".join(question_blocks)
 
+    storage_key = f"course-{course_slug}-final-attempts" if course_slug else ""
+
     return (
         f'<section class="test-section" id="{_esc(section_id)}" '
         f'data-per-attempt="{per_attempt}" '
-        f'data-pass-threshold="{pass_threshold}">\n'
+        f'data-pass-threshold="{pass_threshold}" '
+        f'data-max-attempts="{max_attempts}" '
+        f'data-max-overlap="{max_overlap}" '
+        f'data-persist-attempts="{"true" if persist else "false"}" '
+        f'data-storage-key="{_esc(storage_key)}" '
+        f'data-lockout-message="{_esc(lockout_message)}">\n'
         f'  <h2>{_esc(heading)}</h2>\n'
         f'  <p class="test-meta">{meta_html}</p>\n'
+        f'  <p class="test-attempt-counter" hidden></p>\n'
+        f'  <div class="test-lockout" hidden>\n'
+        f'    <p class="test-lockout-message"></p>\n'
+        f'  </div>\n'
         f'{intro_html}'
         f'  <form class="test-form">\n'
         f'    <div class="test-progress">\n'
@@ -849,8 +1103,11 @@ def render_test_section(quiz_data: dict, section_id: str = "course-final-test",
         f'    <div class="score"></div>\n'
         f'    <div class="pct"></div>\n'
         f'    <div><span class="test-passfail"></span></div>\n'
+        f'    <p class="test-retry-prompt" hidden></p>\n'
+        f'    <button type="button" class="test-retry-btn" hidden>Start next attempt</button>\n'
         f'    <button type="button" class="test-reveal-btn">Show correct answers and explanations</button>\n'
         f'  </div>\n'
+        f'  <button type="button" class="test-reset-btn" hidden>Reset attempts (author only)</button>\n'
         f'</section>'
     )
 
@@ -1126,6 +1383,7 @@ def render_course_preview(course_root: Path) -> str:
             final_data,
             section_id="course-final-test",
             heading=final_name,
+            course_slug=course_meta.course_slug,
         )
         test_js = _TEST_MODE_JS
 
@@ -1216,6 +1474,7 @@ def render_final_preview(course_root: Path) -> str:
             final_data,
             section_id="course-final-test",
             heading=final_name,
+            course_slug=course_meta.course_slug,
         )
         test_js = _TEST_MODE_JS
 

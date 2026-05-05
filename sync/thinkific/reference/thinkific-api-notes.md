@@ -60,8 +60,10 @@ The sync skill sets:
 - course: name, slug, description
 - chapter: name, position, course_id
 - lesson: name, position, body (HTML), chapter_id
-- quiz: name, position, chapter_id, pass_percentage
+- quiz: name, position, chapter_id, pass_percentage, max_attempts (when YAML sets it), randomize_questions, randomize_answers
 - quiz_question: prompt, type, answers (with text and correct), explanation
+
+**Field name caveat for `max_attempts`.** The public API has historically used both `max_attempts` and `number_of_attempts` depending on the documentation revision. The sync skill currently posts `max_attempts`. If Thinkific rejects the request with a 422, swap the key in `thinkific_client.create_quiz` to whatever the current API rev expects.
 
 The sync skill does NOT set:
 - Course pricing (set in Thinkific admin UI)

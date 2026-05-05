@@ -164,14 +164,29 @@ class ThinkificClient:
         })
 
     def create_quiz(self, chapter_id: int, name: str, position: int,
-                    pass_threshold: float = 0.7) -> dict:
-        """Create a quiz in a chapter."""
-        return self._request("POST", "/quizzes", json={
+                    pass_threshold: float = 0.7,
+                    max_attempts: Optional[int] = None,
+                    randomize_questions: bool = True,
+                    randomize_answers: bool = True) -> dict:
+        """Create a quiz in a chapter.
+
+        Phase 14: pass max_attempts to set Thinkific's per-quiz attempt limit.
+        Public API field naming has historically varied; if Thinkific rejects
+        the request, switch the key to 'number_of_attempts' or whatever is
+        documented in the current Thinkific API version. Same caveat for the
+        randomize_* flags.
+        """
+        body: dict = {
             "chapter_id": chapter_id,
             "name": name,
             "position": position,
             "pass_percentage": int(pass_threshold * 100),
-        })
+            "randomize_questions": randomize_questions,
+            "randomize_answers": randomize_answers,
+        }
+        if max_attempts is not None:
+            body["max_attempts"] = int(max_attempts)
+        return self._request("POST", "/quizzes", json=body)
 
     def add_quiz_question(self, quiz_id: int, question_text: str,
                           choices: list[dict], explanation: str = "") -> dict:

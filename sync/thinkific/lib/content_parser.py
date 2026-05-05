@@ -38,11 +38,14 @@ class QuizContent:
     """A parsed quiz (knowledge check or course final) ready to push."""
 
     def __init__(self, file_path: Path, title: str, pass_threshold: float,
-                 questions: list[dict]):
+                 questions: list[dict], max_attempts: Optional[int] = None,
+                 randomize: bool = True):
         self.file_path = file_path
         self.title = title
         self.pass_threshold = pass_threshold
         self.questions = questions
+        self.max_attempts = max_attempts
+        self.randomize = randomize
         # Hash of all question text for change detection
         self.content_hash = hashlib.sha256(
             yaml.dump(questions, sort_keys=True).encode("utf-8")
@@ -125,11 +128,20 @@ def parse_course_final(file_path: Path) -> Optional[QuizContent]:
     if not questions:
         return None
 
+    max_attempts_raw = final.get("max_attempts")
+    try:
+        max_attempts = int(max_attempts_raw) if max_attempts_raw is not None else None
+    except (TypeError, ValueError):
+        max_attempts = None
+    randomize = bool(final.get("randomize", True))
+
     return QuizContent(
         file_path=file_path,
         title=final.get("name", "Course Final"),
         pass_threshold=final.get("pass_threshold", 0.75),
         questions=questions,
+        max_attempts=max_attempts,
+        randomize=randomize,
     )
 
 

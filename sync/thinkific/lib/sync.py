@@ -318,6 +318,9 @@ def _sync_quiz(client: ThinkificClient, chapter_id: int, quiz_content,
                 name=quiz_content.title,
                 position=position,
                 pass_threshold=quiz_content.pass_threshold,
+                max_attempts=getattr(quiz_content, "max_attempts", None),
+                randomize_questions=getattr(quiz_content, "randomize", True),
+                randomize_answers=getattr(quiz_content, "randomize", True),
             )
             quiz_state["quiz_id"] = quiz["id"]
             summary.api_calls += 1

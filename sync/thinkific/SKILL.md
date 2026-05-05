@@ -224,6 +224,28 @@ bes sync --units 1,2,4
 
 Result: only the specified units are touched. Other units left as-is.
 
+## Final Assessment Retest Behavior (Phase 14)
+
+When `exam/course-final.yaml` carries the Phase 14 retest fields, the Thinkific sync configures what Thinkific natively supports:
+
+- `max_attempts` from the YAML is set on the quiz so Thinkific enforces the attempt limit server-side.
+- `randomize_questions` and `randomize_answers` are both turned on so each attempt sees the questions and choices in a different order.
+
+### Statistical, not strict, overlap
+
+**Thinkific does not enforce a hard cap on question overlap between attempts.** It picks `questions_per_attempt` randomly from the bank each time. With a 200-question bank, 50 questions per attempt, and 3 attempts, the expected pairwise overlap between any two attempts is roughly 25 percent of the per-attempt size (~12 questions). That exceeds the static-web target's 10 percent default and cannot be tightened from the public API.
+
+For most K-12 and corporate-training contexts this is acceptable. If your course is high-stakes certification with a strict overlap requirement:
+
+- Use the static-web target instead, which enforces the cap exactly via in-browser sampling.
+- Or, build a custom Thinkific integration via their LTI tool that draws from pre-partitioned bank slices.
+
+The sync skill does not implement either workaround. It does set the LMS-supported limits and document the gap here so course owners know what they get.
+
+### Field name caveat
+
+The Thinkific public API has used both `max_attempts` and `number_of_attempts` as the field name across documentation revisions. The sync skill currently posts `max_attempts`. If Thinkific returns 422 on the create_quiz call, swap the key in `thinkific_client.create_quiz` to whatever the current API rev expects, and update the api-notes reference doc.
+
 ## Quality Checks
 
 Before declaring sync complete, verify:
@@ -267,4 +289,13 @@ The shim template is what repo-bootstrap copies into a new course's scripts/sync
 - Supports create and update
 - Idempotent via sync-state.json hash comparison
 - Rate-limit aware (chunks questions in batches of 10)
+
+### 1.1 (2026-05-05, Phase 14)
+- create_quiz now sets max_attempts (when YAML configures it),
+  randomize_questions, and randomize_answers.
+- SKILL.md documents the statistical-overlap gap on Thinkific:
+  random sampling means retests overlap roughly 25 percent on
+  average for the default 200/50/3 setup, exceeding the static-web
+  target's 10 percent cap. Acceptable for most contexts, not for
+  strict certification.
 - Both bes sync and standalone python3 scripts/sync.py paths supported

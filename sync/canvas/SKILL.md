@@ -261,6 +261,26 @@ bes sync --dry-run
 
 Result: full orchestration runs against your repo with stubbed responses. `sync-state.dry-run.json` lists every API call that would have been made. No Canvas account required.
 
+## Final Assessment Retest Behavior (Phase 14)
+
+When `exam/course-final.yaml` carries the Phase 14 retest fields, the Canvas sync configures what classic Canvas Quizzes natively support:
+
+- `allowed_attempts` from the YAML's `max_attempts` is set on the quiz so Canvas enforces the cap server-side. Canvas convention: pass any positive integer to cap, or `-1` for unlimited.
+- `shuffle_answers` stays on; the `pick_count` on the question group already randomizes which questions a student sees per attempt.
+
+### Statistical, not strict, overlap
+
+**Canvas does not enforce a hard cap on question overlap between attempts.** The question group draws `questions_per_attempt` randomly from the bank each attempt. With a 200-question bank, 50 questions per attempt, and 3 attempts, the expected pairwise overlap between any two attempts is roughly 25 percent of the per-attempt size (~12 questions). That exceeds the static-web target's 10 percent default and cannot be tightened from the public Canvas Quizzes API.
+
+For most course contexts this is fine. If your course is high-stakes certification with a strict overlap requirement:
+
+- Use the static-web target instead, which enforces the cap exactly via in-browser sampling.
+- Or, manually create N separate quizzes (one per attempt) each drawing from a pre-partitioned slice of the bank. Heavy lift, not implemented automatically by this sync.
+
+### New Quizzes vs Classic
+
+This sync uses classic quizzes. New Quizzes (the LTI tool) supports more granular randomization but is a separate API and a separate UI. If your institution mandates New Quizzes, that path is a future Phase.
+
 ## Quality Checks
 
 Before declaring sync complete, verify:
@@ -309,3 +329,12 @@ The shim template is what repo-bootstrap copies into a new course's scripts/sync
 - Dry-run mode that records every would-be API call to sync-state.dry-run.json
 - Question groups for course final (pick N of M)
 - Rate-limit aware (chunks final questions in batches of 10)
+
+### 1.1 (2026-05-05, Phase 14)
+- create_quiz now sets allowed_attempts (when YAML configures it)
+  on both unit knowledge checks and the course final.
+- SKILL.md documents the statistical-overlap gap on Canvas: random
+  pick_count means retests overlap roughly 25 percent on average for
+  the default 200/50/3 setup, exceeding the static-web target's
+  10 percent cap. Strict overlap requires the static-web target or
+  manual per-attempt quizzes drawing from pre-partitioned bank slices.

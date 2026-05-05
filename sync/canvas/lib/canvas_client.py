@@ -260,18 +260,28 @@ class CanvasClient:
 
     def create_quiz(self, course_id: int, title: str, quiz_type: str = "assignment",
                     pass_threshold: float = 0.7, shuffle_answers: bool = True,
-                    description_html: str = "") -> dict:
+                    description_html: str = "",
+                    allowed_attempts: Optional[int] = None) -> dict:
+        """Create a classic quiz.
+
+        Phase 14: pass allowed_attempts to set Canvas's per-quiz attempt limit.
+        Canvas convention: -1 means unlimited; any positive integer caps
+        attempts at that number.
+        """
+        quiz_body: dict = {
+            "title": title,
+            "quiz_type": quiz_type,
+            "shuffle_answers": shuffle_answers,
+            "scoring_policy": "keep_highest",
+            "description": description_html,
+            "show_correct_answers": True,
+        }
+        if allowed_attempts is not None:
+            quiz_body["allowed_attempts"] = int(allowed_attempts)
         return self._request(
             "POST",
             f"/courses/{course_id}/quizzes",
-            json={"quiz": {
-                "title": title,
-                "quiz_type": quiz_type,
-                "shuffle_answers": shuffle_answers,
-                "scoring_policy": "keep_highest",
-                "description": description_html,
-                "show_correct_answers": True,
-            }},
+            json={"quiz": quiz_body},
         )
 
     def add_quiz_question(self, course_id: int, quiz_id: int, question_name: str,

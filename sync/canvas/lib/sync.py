@@ -348,6 +348,8 @@ def _sync_quiz(client: CanvasClient, course_id: int, module_id: int,
                 title=quiz_content.title,
                 quiz_type="assignment",
                 pass_threshold=quiz_content.pass_threshold,
+                shuffle_answers=getattr(quiz_content, "randomize", True),
+                allowed_attempts=getattr(quiz_content, "max_attempts", None),
             )
             quiz_state["quiz_id"] = quiz["id"]
             summary.api_calls += 1
@@ -423,6 +425,8 @@ def _sync_final_quiz(client: CanvasClient, course_id: int, quiz_content,
                 title=quiz_content.title,
                 quiz_type="assignment",
                 pass_threshold=pass_threshold,
+                shuffle_answers=getattr(quiz_content, "randomize", True),
+                allowed_attempts=getattr(quiz_content, "max_attempts", None),
             )
             quiz_state["quiz_id"] = quiz["id"]
             summary.api_calls += 1

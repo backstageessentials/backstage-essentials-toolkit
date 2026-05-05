@@ -79,7 +79,7 @@ The sync skill sets:
 - module: `name`, `position`
 - module_item: `title`, `type`, `page_url` or `content_id`, `position`
 - page: `title`, `body`, `published` (default false)
-- quiz: `title`, `quiz_type`, `shuffle_answers`, `description`, `show_correct_answers`, `scoring_policy`
+- quiz: `title`, `quiz_type`, `shuffle_answers`, `description`, `show_correct_answers`, `scoring_policy`, `allowed_attempts` (when YAML sets max_attempts)
 - question: `question_name`, `question_text`, `question_type`, `points_possible`, `answers`
 - question_group: `name`, `pick_count`, `question_points`
 

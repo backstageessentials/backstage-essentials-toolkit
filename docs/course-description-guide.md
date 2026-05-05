@@ -35,11 +35,15 @@ Bad pitch:
 
 > This course teaches the fundamentals of live event production. Students will learn essential skills used by industry professionals. Topics include audio, lighting, and stage management.
 
-Good pitch:
+Good pitch (trade):
 
 > Backstage Essentials is for the new crew member who showed up to their first call and realized nobody is going to teach them anything on the floor. The course covers the actual job: how to take a call, how to load a truck without breaking equipment or yourself, how to read the room when the FOH engineer is stressed, how to walk a stage without dying. It is taught by working hands who have done this for years, not classroom instructors. Students who finish know enough to be hireable on real crews.
 
-The bad version could describe any course on this topic. The good version could only be this course.
+Good pitch (high school history, American Revolution unit):
+
+> Why did colonies that had been British for over a century decide to break with the crown in 1776, and why did it look very different from one colony to the next? This unit unpacks the answer in primary sources: the speeches, the broadsides, the merchant letters, the colonial newspapers. Students leave able to argue, with evidence, why their assigned colony chose what it chose. The unit assumes no prior knowledge of the period and supports any 10th or 11th grade US history sequence.
+
+The bad version could describe any course on this topic. A good pitch could only be this course.
 
 ## Part 2: The Specs
 

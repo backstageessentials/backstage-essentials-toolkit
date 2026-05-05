@@ -159,7 +159,7 @@ Run `bes --help` for the full list. The most-used commands:
 | `bes new-quiz` | Generate a unit's knowledge-check questions. |
 | `bes add-diagrams` | Add Mermaid diagrams to existing lessons where they earn their place. |
 | `bes add-microsim` | Add an interactive HTML widget to a lesson by customizing one of seven starter templates. |
-| `bes build-final` | Generate the course final assessment question bank (typically 200 questions, 100 sampled per attempt). |
+| `bes build-final` | Generate the course final assessment question bank (typically 200 questions, 50 sampled per attempt across up to 3 retest attempts). |
 | `bes build-course` | Build a course end to end: every lesson, every unit's knowledge check, the final. |
 | `bes preview` | Render an HTML preview of the entire course locally. |
 | `bes export-pdf` | Generate a PDF version of the course (works regardless of the course's primary platform). |
@@ -168,6 +168,13 @@ Run `bes --help` for the full list. The most-used commands:
 | `bes commit` / `bes push` | Stage, commit, push the course repo. |
 
 Skills the toolkit ships with: course-spec-builder, repo-bootstrap, lesson-drafter, quiz-builder, final-assessment-builder, diagram-builder, microsim-builder, course-validator. Each is self-contained in `skills/` and reads voice context from the course it is run in, so the same skill produces different output for a high-school history course vs. an adult trade course.
+
+Notable runtime features:
+
+- **Mermaid diagrams** render inline in lessons and previews (via the Mermaid CDN in HTML, pre-rendered SVG for Thinkific/PDF).
+- **MicroSims** are interactive HTML widgets you can drop into a lesson by customizing one of seven starter templates (signal-flow, circuit, timeline, drag-and-drop matcher, formula explorer, etc.).
+- **Course final retests.** The static-web target tracks attempts in localStorage, enforces a configurable max-attempts cap (default 3), and on retests prefers questions the student got wrong on prior attempts. LMS targets (Thinkific, Canvas) set the platform's native attempt cap. PDF mode is a one-shot snapshot.
+- **Multi-platform sync.** The same course YAML drives Thinkific, Canvas, Google Classroom, static-web, or PDF without rewriting content.
 
 ---
 

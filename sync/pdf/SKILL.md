@@ -98,6 +98,10 @@ None. PDFs are built locally. There is no API and no token.
 
 PDFs cannot hide content interactively, so knowledge-check answers go directly under each question, in a colored block. The block is page-break-protected so the answer stays with the question. Course finals (when included) hide their answers via CSS so the PDF can be used as a take-home test packet.
 
+## Final assessment retest fields (Phase 14)
+
+PDF mode does not support retests. Each generated PDF is a single snapshot of randomly sampled questions. The `max_attempts`, `max_overlap_percentage`, `retest_lockout_message`, and `attempts_persist_across_sessions` fields in `exam/course-final.yaml` are ignored by PDF export. If retest enforcement matters for your course, deliver via the static-web target (strict overlap, localStorage attempt tracking) or one of the LMS targets (Thinkific, Canvas) where the LMS enforces the attempt cap server-side.
+
 ## Output Format
 
 ### Console output during sync

@@ -1,8 +1,9 @@
 """Platform router.
 
 Reads the platform field from course-config.yaml and dispatches to the
-correct sync implementation. thinkific (Phase 2) and canvas (Phase 11) are
-wired up; the others raise PlatformError until their phase ships.
+correct sync implementation. thinkific (Phase 2), canvas (Phase 11), pdf
+(Phase 12), and talentlms (Phase 16) are wired up; the others raise
+PlatformError until their phase ships.
 
 The sync skill packages live as siblings of the bes package at the toolkit
 root (e.g., `<toolkit-root>/sync/canvas/lib/sync.py`). The editable install
@@ -32,6 +33,7 @@ SUPPORTED_PLATFORMS = {
     "thinkific": "implemented",
     "canvas": "implemented",
     "pdf": "implemented",
+    "talentlms": "implemented",
     "google-classroom": "deferred",
     "static-web": "deferred",
 }
@@ -51,7 +53,8 @@ def get_sync_function(platform: str):
     if status == "deferred":
         raise PlatformError(
             f"Platform '{platform}' is not yet implemented. "
-            f"For now, 'thinkific' and 'canvas' are the supported sync targets."
+            f"For now, 'thinkific', 'canvas', 'talentlms', and 'pdf' are the "
+            f"supported sync targets."
         )
 
     _ensure_toolkit_on_path()
@@ -66,6 +69,10 @@ def get_sync_function(platform: str):
 
     if platform == "pdf":
         from sync.pdf.lib import sync
+        return sync
+
+    if platform == "talentlms":
+        from sync.talentlms.lib import sync
         return sync
 
     raise PlatformError(f"Internal error: no sync function for '{platform}'.")

@@ -24,6 +24,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import re
 import shutil
 import subprocess
@@ -101,6 +102,14 @@ def render_mermaid_to_svg(source: str, cache_dir: Path,
     if cached.exists():
         return cached.read_text(encoding="utf-8")
 
+    # Isolate npm's cache to a per-course location so a broken global
+    # ~/.npm (root-owned, mixed permissions) does not block diagram
+    # rendering. Honor an explicit override if the caller already set it.
+    env = os.environ.copy()
+    npm_cache = cache_dir / "npm-cache"
+    npm_cache.mkdir(parents=True, exist_ok=True)
+    env.setdefault("NPM_CONFIG_CACHE", str(npm_cache))
+
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp = Path(tmpdir)
         in_file = tmp / "in.mmd"
@@ -112,8 +121,8 @@ def render_mermaid_to_svg(source: str, cache_dir: Path,
         cmd = _mmdc_command(mmdc_path, in_file, out_file, cfg_file)
         try:
             result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=60,
-                check=False,
+                cmd, capture_output=True, text=True, timeout=180,
+                check=False, env=env,
             )
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
             logger.warning(f"mmdc invocation failed: {e}")

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import re
 import shutil
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from html import escape as _esc
 from pathlib import Path
 from typing import Optional
@@ -42,6 +42,10 @@ class CourseMeta:
     course_name: str
     tagline: str = ""
     course_slug: str = ""
+    # Phase: layered knowledge_check_mode. Course-config sets the default
+    # for every unit's knowledge-check.yaml in this course. A unit's quiz
+    # YAML may override via its own `mode:` key. Falls back to "study".
+    knowledge_check_mode: str = "study"
 
 
 @dataclass
@@ -57,6 +61,12 @@ class Unit:
     lessons: list[Lesson]
     knowledge_check: list[dict]
     knowledge_check_title: str
+    # Phase: per-quiz mode override read from the unit's knowledge-check.yaml.
+    # Either "study", "test", or None (falls back to course/toolkit default).
+    knowledge_check_mode_override: Optional[str] = None
+    # Whole quiz dict from the YAML (under quiz:). Used by test-mode
+    # rendering to access pass_threshold and similar fields.
+    knowledge_check_data: dict = field(default_factory=dict)
 
 
 # --------------------------------------------------------------------------
@@ -197,11 +207,22 @@ def _load_unit(unit_folder: Path) -> Unit:
     kc_path = unit_folder / "knowledge-check.yaml"
     kc_questions: list[dict] = []
     kc_title = f"Unit {unit_data.get('number', '?')} Knowledge Check"
+    kc_data: dict = {}
+    kc_mode_override: Optional[str] = None
     if kc_path.exists():
-        kc = (yaml.safe_load(kc_path.read_text(encoding="utf-8")) or {}).get("quiz", {})
+        kc_yaml = yaml.safe_load(kc_path.read_text(encoding="utf-8")) or {}
+        # Per-quiz mode override may live at the top of the YAML or
+        # nested under quiz: — accept either.
+        explicit_mode = kc_yaml.get("mode")
+        kc = kc_yaml.get("quiz", {})
+        if not explicit_mode and isinstance(kc, dict):
+            explicit_mode = kc.get("mode")
+        if explicit_mode in ("study", "test"):
+            kc_mode_override = explicit_mode
         kc_questions = kc.get("questions") or []
         if kc.get("title"):
             kc_title = kc["title"]
+        kc_data = kc
 
     return Unit(
         number=int(unit_data.get("number", 0) or 0),
@@ -209,6 +230,8 @@ def _load_unit(unit_folder: Path) -> Unit:
         lessons=lessons,
         knowledge_check=kc_questions,
         knowledge_check_title=kc_title,
+        knowledge_check_mode_override=kc_mode_override,
+        knowledge_check_data=kc_data,
     )
 
 
@@ -217,6 +240,8 @@ def _load_course_meta(course_root: Path) -> CourseMeta:
     course = config.get("course", {})
     name = course.get("name", "Course")
     slug = course.get("slug", "")
+    kc_mode_raw = course.get("knowledge_check_mode")
+    kc_mode = kc_mode_raw if kc_mode_raw in ("study", "test") else "study"
 
     tagline = ""
     desc_path = course_root / "course-description.md"
@@ -228,7 +253,8 @@ def _load_course_meta(course_root: Path) -> CourseMeta:
                 continue
             tagline = stripped.replace("\n", " ")
             break
-    return CourseMeta(course_name=name, tagline=tagline, course_slug=slug)
+    return CourseMeta(course_name=name, tagline=tagline, course_slug=slug,
+                      knowledge_check_mode=kc_mode)
 
 
 # --------------------------------------------------------------------------
@@ -563,14 +589,17 @@ def _render_question(idx: int, q: dict) -> str:
 # Test mode (course final): interactive form with score + reveal.
 # --------------------------------------------------------------------------
 
-def detect_quiz_mode(yaml_path: Path, data: Optional[dict] = None) -> str:
+def detect_quiz_mode(yaml_path: Path, data: Optional[dict] = None,
+                       course_kc_default: str = "study") -> str:
     """Return 'test' or 'study' for a quiz YAML file.
 
-    Convention:
-    - Anything in exam/ at the course root is test mode.
-    - Anything named knowledge-check.yaml in a unit folder is study mode.
-    A top-level mode: key (or one nested under quiz: / final_assessment:)
-    overrides the convention.
+    Resolution order:
+    1. Explicit `mode:` key in the YAML (top-level or nested under quiz: /
+       final_assessment:). Always wins.
+    2. Convention: anything in exam/ at the course root is "test".
+    3. course_kc_default — the course-config.yaml `knowledge_check_mode`
+       value, applied to non-exam quizzes (i.e., unit knowledge checks).
+       Defaults to "study" so older callers keep their existing behavior.
     """
     if data is None:
         try:
@@ -586,6 +615,21 @@ def detect_quiz_mode(yaml_path: Path, data: Optional[dict] = None) -> str:
         return explicit
     if yaml_path.parent.name == "exam":
         return "test"
+    if course_kc_default in ("study", "test"):
+        return course_kc_default
+    return "study"
+
+
+def resolve_kc_mode(unit: "Unit", course_meta: "CourseMeta") -> str:
+    """Resolve the knowledge-check render mode for one unit.
+
+    Layered: per-quiz override (in knowledge-check.yaml) wins; otherwise
+    the course-config knowledge_check_mode wins; otherwise "study".
+    """
+    if unit.knowledge_check_mode_override in ("study", "test"):
+        return unit.knowledge_check_mode_override
+    if course_meta.knowledge_check_mode in ("study", "test"):
+        return course_meta.knowledge_check_mode
     return "study"
 
 
@@ -732,6 +776,9 @@ _TEST_MODE_JS = """\
     var maxOverlap = parseFloat(section.dataset.maxOverlap);
     if (isNaN(maxOverlap)) maxOverlap = 0.10;
     var lockoutMessage = section.dataset.lockoutMessage || '';
+    // Phase: simple-mode test sections skip attempt tracking entirely.
+    // Used for unit knowledge checks rendered in test mode (formative).
+    var simpleMode = section.dataset.simpleMode === 'true';
 
     var allQuestions = Array.prototype.slice.call(
       section.querySelectorAll('.test-question')
@@ -764,14 +811,16 @@ _TEST_MODE_JS = """\
       });
     }
 
-    // Lockout: at or above max_attempts.
-    if (attempts.length >= maxAttempts && maxAttempts >= 1) {
+    // Lockout: at or above max_attempts. Skipped in simple mode.
+    if (!simpleMode && attempts.length >= maxAttempts && maxAttempts >= 1) {
       renderLockout(section, lockoutMessage, attempts);
       return;
     }
 
     var attemptNumber = attempts.length + 1;
-    showAttemptCounter(section, attemptNumber, maxAttempts);
+    if (!simpleMode) {
+      showAttemptCounter(section, attemptNumber, maxAttempts);
+    }
 
     // Sample questions for this attempt.
     var picked = sampleForAttempt(
@@ -875,30 +924,47 @@ _TEST_MODE_JS = """\
         if (progressBar) progressBar.style.display = 'none';
         if (resultsPanel) resultsPanel.hidden = false;
 
-        // Retest prompt or final lockout.
-        var attemptsLeft = maxAttempts - attempts.length;
-        if (passed) {
+        // Retest prompt. Simple-mode KCs always allow a retake; the
+        // course final flows through the Phase 14 retest/lockout logic.
+        if (simpleMode) {
           if (retryPrompt) {
-            retryPrompt.textContent = 'You passed. Retests are not required.';
-            retryPrompt.hidden = false;
-          }
-        } else if (attemptsLeft > 0) {
-          if (retryPrompt) {
-            retryPrompt.textContent =
-              'You can retake this exam. ' + attemptsLeft + ' attempt' +
-              (attemptsLeft === 1 ? '' : 's') + ' remaining.';
+            retryPrompt.textContent = passed
+              ? 'Passed. Refresh or click below to take it again.'
+              : 'Did not pass. Refresh or click below to take it again.';
             retryPrompt.hidden = false;
           }
           if (retryBtn) {
+            retryBtn.textContent = 'Retake';
             retryBtn.hidden = false;
             retryBtn.addEventListener('click', function () {
               window.location.reload();
             });
           }
         } else {
-          if (retryPrompt) {
-            retryPrompt.textContent = lockoutMessage;
-            retryPrompt.hidden = false;
+          var attemptsLeft = maxAttempts - attempts.length;
+          if (passed) {
+            if (retryPrompt) {
+              retryPrompt.textContent = 'You passed. Retests are not required.';
+              retryPrompt.hidden = false;
+            }
+          } else if (attemptsLeft > 0) {
+            if (retryPrompt) {
+              retryPrompt.textContent =
+                'You can retake this exam. ' + attemptsLeft + ' attempt' +
+                (attemptsLeft === 1 ? '' : 's') + ' remaining.';
+              retryPrompt.hidden = false;
+            }
+            if (retryBtn) {
+              retryBtn.hidden = false;
+              retryBtn.addEventListener('click', function () {
+                window.location.reload();
+              });
+            }
+          } else {
+            if (retryPrompt) {
+              retryPrompt.textContent = lockoutMessage;
+              retryPrompt.hidden = false;
+            }
           }
         }
       });
@@ -969,7 +1035,8 @@ _DEFAULT_LOCKOUT_MESSAGE = (
 def render_test_section(quiz_data: dict, section_id: str = "course-final-test",
                          heading: str = "Final Assessment",
                          intro: Optional[str] = None,
-                         course_slug: str = "") -> str:
+                         course_slug: str = "",
+                         simple_mode: bool = False) -> str:
     """Return the HTML for a test-mode quiz section.
 
     quiz_data is the inner dict from the YAML (the value under final_assessment:
@@ -980,6 +1047,10 @@ def render_test_section(quiz_data: dict, section_id: str = "course-final-test",
     - Tracks attempts in localStorage under `course-{slug}-final-attempts`
       when course_slug is provided and attempts_persist_across_sessions is true.
     - Handles small or empty banks gracefully via min(bank, per_attempt).
+
+    simple_mode strips the Phase 14 retest UI: no attempt counter, no
+    lockout panel, no localStorage persistence. Used for unit knowledge
+    checks rendered in test mode (formative; refresh to retry).
     """
     questions = quiz_data.get("questions") or []
     bank_size = len(questions)
@@ -1041,7 +1112,12 @@ def render_test_section(quiz_data: dict, section_id: str = "course-final-test",
 
     # Meta line
     meta_lines = []
-    if bank_size < (per_attempt_raw or bank_size):
+    if simple_mode:
+        meta_lines.append(
+            f"Test mode. {bank_size} question"
+            f"{'s' if bank_size != 1 else ''}."
+        )
+    elif bank_size < (per_attempt_raw or bank_size):
         meta_lines.append(
             f"Test mode preview with {per_attempt} of "
             f"{per_attempt_raw} target questions available "
@@ -1055,7 +1131,7 @@ def render_test_section(quiz_data: dict, section_id: str = "course-final-test",
     meta_lines.append(
         f"Pass threshold: {round(pass_threshold * 100)} percent."
     )
-    if max_attempts > 1:
+    if not simple_mode and max_attempts > 1:
         meta_lines.append(
             f"Up to {max_attempts} attempts; retests overlap at most "
             f"{round(max_overlap * 100)} percent with prior attempts."
@@ -1074,6 +1150,10 @@ def render_test_section(quiz_data: dict, section_id: str = "course-final-test",
     questions_html = "\n".join(question_blocks)
 
     storage_key = f"course-{course_slug}-final-attempts" if course_slug else ""
+    if simple_mode:
+        # KCs do not persist attempts. Each load is fresh; refresh to retry.
+        persist = False
+        storage_key = ""
 
     return (
         f'<section class="test-section" id="{_esc(section_id)}" '
@@ -1082,6 +1162,7 @@ def render_test_section(quiz_data: dict, section_id: str = "course-final-test",
         f'data-max-attempts="{max_attempts}" '
         f'data-max-overlap="{max_overlap}" '
         f'data-persist-attempts="{"true" if persist else "false"}" '
+        f'data-simple-mode="{"true" if simple_mode else "false"}" '
         f'data-storage-key="{_esc(storage_key)}" '
         f'data-lockout-message="{_esc(lockout_message)}">\n'
         f'  <h2>{_esc(heading)}</h2>\n'
@@ -1151,14 +1232,26 @@ def render_unit_preview(unit_folder: Path, course_root: Optional[Path] = None) -
         "<p><em>No lessons drafted yet.</em></p>"
     )
 
+    kc_mode = resolve_kc_mode(unit, course_meta)
+    test_js = ""
     if unit.knowledge_check:
-        kc_items = "\n".join(
-            _render_question(i, q) for i, q in enumerate(unit.knowledge_check)
-        )
-        kc_block = (
-            f"    <h2>{_esc(unit.knowledge_check_title)}</h2>\n\n"
-            f'    <ol class="kc-list">\n{kc_items}\n</ol>'
-        )
+        if kc_mode == "test":
+            kc_block = render_test_section(
+                unit.knowledge_check_data,
+                section_id=f"unit-{unit.number}-kc-test",
+                heading=unit.knowledge_check_title,
+                course_slug=course_meta.course_slug,
+                simple_mode=True,
+            )
+            test_js = _TEST_MODE_JS
+        else:
+            kc_items = "\n".join(
+                _render_question(i, q) for i, q in enumerate(unit.knowledge_check)
+            )
+            kc_block = (
+                f"    <h2>{_esc(unit.knowledge_check_title)}</h2>\n\n"
+                f'    <ol class="kc-list">\n{kc_items}\n</ol>'
+            )
     else:
         kc_block = (
             f"    <h2>{_esc(unit.knowledge_check_title)}</h2>\n"
@@ -1188,6 +1281,7 @@ def render_unit_preview(unit_folder: Path, course_root: Optional[Path] = None) -
 
   </div>
   {_MERMAID_INIT}
+  {test_js}
 </body>
 </html>
 """
@@ -1326,6 +1420,7 @@ def render_course_preview(course_root: Path) -> str:
 
     # Per-unit sections
     unit_sections: list[str] = []
+    any_test_mode_kc = False
     for unit_folder, unit, raw in units_info:
         outcomes = raw.get("learning_outcomes") or []
         outcomes_html = ""
@@ -1350,18 +1445,37 @@ def render_course_preview(course_root: Path) -> str:
         else:
             lessons_html = '  <p class="empty"><em>Lessons coming soon.</em></p>'
 
+        kc_test_mode_used = False
         if unit.knowledge_check:
-            kc_items = "\n".join(
-                _render_question(i, q) for i, q in enumerate(unit.knowledge_check)
-            )
-            kc_html = (
-                '  <section class="kc">\n'
-                '    <h3>Knowledge Check</h3>\n'
-                f'    <ol class="kc-list">\n{kc_items}\n    </ol>\n'
-                '  </section>'
-            )
+            kc_mode = resolve_kc_mode(unit, course_meta)
+            if kc_mode == "test":
+                kc_test_mode_used = True
+                kc_html = (
+                    '  <section class="kc">\n'
+                    + render_test_section(
+                        unit.knowledge_check_data,
+                        section_id=f"unit-{unit.number}-kc-test",
+                        heading=unit.knowledge_check_title,
+                        course_slug=course_meta.course_slug,
+                        simple_mode=True,
+                    )
+                    + '\n  </section>'
+                )
+            else:
+                kc_items = "\n".join(
+                    _render_question(i, q) for i, q in enumerate(unit.knowledge_check)
+                )
+                kc_html = (
+                    '  <section class="kc">\n'
+                    '    <h3>Knowledge Check</h3>\n'
+                    f'    <ol class="kc-list">\n{kc_items}\n    </ol>\n'
+                    '  </section>'
+                )
         else:
             kc_html = ""
+
+        if kc_test_mode_used:
+            any_test_mode_kc = True
 
         unit_sections.append(
             f'<section class="unit" id="unit-{unit.number}">\n'
@@ -1385,6 +1499,9 @@ def render_course_preview(course_root: Path) -> str:
             heading=final_name,
             course_slug=course_meta.course_slug,
         )
+        test_js = _TEST_MODE_JS
+    elif any_test_mode_kc:
+        # No final, but at least one KC is in test mode; we still need the JS.
         test_js = _TEST_MODE_JS
 
     return f"""<!DOCTYPE html>

@@ -150,6 +150,41 @@ When the rendered course final has the Phase 14 fields set (or relies on default
 - `attempts_persist_across_sessions: false` in the YAML disables localStorage entirely. Each page load is a fresh attempt with no overlap enforcement.
 - The retest sampler is a best-effort algorithm. If the validator warned that the configured (bank, per-attempt, attempts, overlap) is mathematically impossible, late attempts may serve fewer than `questions_per_attempt` questions because the constraint takes priority over the count.
 
+## Knowledge Check Rendering Mode
+
+Each unit's knowledge check renders in one of two modes:
+
+- **study** (default): each question shows its choices, then a `<details>` collapsible labeled "Show answer" that reveals the correct choice and explanation. Suited for self-paced practice where the student wants the answer right there.
+- **test**: each question renders with radio inputs, the unit's KC ends with a Submit button, and after submit the student sees a score, a pass/fail badge, and a "Show correct answers and explanations" reveal button. No localStorage tracking, no retest cap; refresh to retry.
+
+### Resolution order (3 layers)
+
+1. **Per-quiz override.** A unit's `knowledge-check.yaml` may set `mode: "study"` or `mode: "test"` (top-level, or nested under `quiz:`). This wins.
+2. **Course default.** `course-config.yaml` may set `knowledge_check_mode: "study" | "test"` under the `course:` block. This applies to every unit in the course unless that unit overrides.
+3. **Toolkit default.** "study". Applied when neither of the above is set.
+
+### Example
+
+```yaml
+# course-config.yaml — turn on test mode for the whole course
+course:
+  knowledge_check_mode: "test"
+```
+
+```yaml
+# content/unit-04-easy-review/knowledge-check.yaml — but Unit 4 stays study
+quiz:
+  mode: "study"
+  title: "Unit 4 Knowledge Check"
+  questions:
+    - id: u4-kc-01
+      ...
+```
+
+### Test-mode KC vs course final
+
+KC test mode is intentionally lighter than the course final. The Phase 14 retest features (max_attempts, max_overlap_percentage, attempts_persist_across_sessions, retest_lockout_message) only apply to the course final assessment. KC test mode skips localStorage entirely; each page load is fresh, refresh to retake.
+
 ## Thinkific Note
 
 Thinkific's lesson sandbox may strip or sandbox the `<script>` tag for the Mermaid CDN, so on Thinkific the recommended pattern is to pre-render Mermaid to inline SVG before pushing. The Thinkific sync target handles that conversion at sync time. The static-web preview pipeline does not need that conversion since it runs in a normal browser.
@@ -178,3 +213,10 @@ Thinkific's lesson sandbox may strip or sandbox the `<script>` tag for the Merma
 - Overlap-aware sampling, localStorage-backed attempt tracking,
   attempt counter, retake/lockout UI, and `?reset=true` / `?author=true`
   query params for course-author testing.
+
+### 0.4 (2026-05-05)
+- Layered `knowledge_check_mode` ("study" or "test") for unit
+  knowledge checks. Per-quiz `mode:` key in knowledge-check.yaml
+  beats course-config `knowledge_check_mode` beats toolkit default
+  ("study"). KC test mode is a simple submit-and-reveal flow that
+  skips Phase 14 retest tracking; refresh to retry.

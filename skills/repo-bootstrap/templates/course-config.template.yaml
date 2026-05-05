@@ -13,6 +13,17 @@ course:
   duration_hours: {DURATION_OR_NULL}
   language: "{LANGUAGE_OR_DEFAULT}"
 
+  # Default rendering mode for every unit's knowledge check in this course.
+  # "study" (default) shows answers under each question in a colored block.
+  # "test" renders radio buttons + submit + reveal-correct-answers, similar
+  # to the course final.
+  # Layered:
+  #   1. A unit's knowledge-check.yaml may set its own `mode:` key (top
+  #      level or nested under quiz:) to override per-quiz.
+  #   2. Otherwise this course-level setting wins.
+  #   3. Otherwise the toolkit default ("study") wins.
+  # knowledge_check_mode: "study"
+
   # Platform-specific fields. The repo-bootstrap skill writes only the keys
   # that match the chosen platform, with a placeholder value for the user to
   # fill in. Other keys stay commented out so the file remains self-explaining.

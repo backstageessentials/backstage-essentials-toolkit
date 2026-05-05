@@ -66,6 +66,20 @@ def load_config(course_root: Path = None) -> dict:
             f"course-config.yaml is missing required fields: {', '.join(missing)}"
         )
 
+    # Knowledge-check rendering default for the whole course. Per-quiz mode
+    # keys in each unit's knowledge-check.yaml override this. Default is
+    # "study" (collapsible answers under each question, matching the
+    # toolkit-wide default).
+    kc_mode_raw = course.get("knowledge_check_mode")
+    if kc_mode_raw is None:
+        course["knowledge_check_mode"] = "study"
+    else:
+        if kc_mode_raw not in ("study", "test"):
+            raise ConfigError(
+                f"course-config.yaml: knowledge_check_mode must be 'study' "
+                f"or 'test', got {kc_mode_raw!r}."
+            )
+
     # Platform-specific required fields and defaults.
     platform = course.get("platform")
     if platform == "canvas":

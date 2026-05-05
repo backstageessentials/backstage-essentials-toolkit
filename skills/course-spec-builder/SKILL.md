@@ -162,3 +162,9 @@ The overlay files for non-thinkific platforms are stubs in Phase 2. They get fil
 ### 1.3 (2026-05-05)
 - Phase 11: Canvas overlay populated with full API notes, sync command,
   platform risks, and prerequisites alongside the Thinkific overlay.
+
+### 1.4 (2026-05-05)
+- Phase 12: PDF overlay populated with renderer notes (WeasyPrint
+  primary, Chrome fallback), Mermaid pre-render via mermaid-cli, the
+  QR-vs-screenshot MicroSim strategies, and the pdf_* course-config
+  fields.

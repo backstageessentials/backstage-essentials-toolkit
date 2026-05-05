@@ -71,10 +71,10 @@ Do NOT run this skill if the course repo already has content. It is meant for fr
 7. Generate the file tree. Create files in this order so partial failures are recoverable:
    
    a. Top-level config files first:
-      - `course-config.yaml` (populated with course name, slug, platform, completion threshold, units count, and paths to course-description.md and voice-guide.md). When `target_platform` is `canvas`, also write a top-level `canvas_account_id` field under the `course:` block, defaulted to `1` with a comment instructing the user to replace it with the right Canvas account ID for their instance.
-      - `.gitignore` (with .env, .DS_Store, __pycache__, sync-state.json, sync-state.dry-run.json, .claude/settings.local.json, and editor cruft)
-      - `.env.example` (copy `templates/env-example/{target_platform}.env`. For Thinkific that is `THINKIFIC_API_KEY` and `THINKIFIC_SUBDOMAIN`. For Canvas that is `CANVAS_API_URL` and `CANVAS_API_TOKEN`. Each platform template carries the comments the user needs.)
-      - `requirements.txt` (with pyyaml, requests, markdown-it-py for all platforms; add platform-specific libraries as needed)
+      - `course-config.yaml` (populated with course name, slug, platform, completion threshold, units count, and paths to course-description.md and voice-guide.md). When `target_platform` is `canvas`, also write a top-level `canvas_account_id` field under the `course:` block, defaulted to `1` with a comment instructing the user to replace it with the right Canvas account ID for their instance. When `target_platform` is `pdf`, write the four pdf_* fields (`pdf_page_size`, `pdf_microsim_strategy`, `pdf_microsim_base_url`, `pdf_include_final`) with their defaults.
+      - `.gitignore` (with .env, .DS_Store, __pycache__, sync-state.json, sync-state.dry-run.json, .mermaid-svg-cache/, build/, .claude/settings.local.json, and editor cruft)
+      - `.env.example` (copy `templates/env-example/{target_platform}.env`. For Thinkific that is `THINKIFIC_API_KEY` and `THINKIFIC_SUBDOMAIN`. For Canvas that is `CANVAS_API_URL` and `CANVAS_API_TOKEN`. For PDF the file is mostly empty since PDF needs no auth. Each platform template carries the comments the user needs.)
+      - `requirements.txt` (with pyyaml, requests, markdown-it-py for all platforms; add `weasyprint` and `qrcode[pil]` when target_platform is `pdf`)
       - `README.md` (with course name, one-paragraph summary from the description, link to docs/build-spec.md, and platform info)
 
    b. Content folders next:
@@ -185,6 +185,25 @@ CANVAS_API_TOKEN=your_api_token_here
 ```
 
 For Canvas, also add `canvas_account_id: <id>` to course-config.yaml under the `course:` block. The validator refuses to sync a Canvas course without it.
+
+### .env.example (PDF example)
+
+PDF needs no auth and no remote services. The .env.example file is mostly empty:
+
+```
+# Optional. Override the output directory.
+# OUTPUT_DIR=./build/pdf
+```
+
+Add the following PDF-specific fields under the `course:` block in course-config.yaml when `target_platform` is `pdf`. All have working defaults; no field is required.
+
+```yaml
+course:
+  pdf_page_size: "letter"          # or "a4"
+  pdf_microsim_strategy: "qr"      # or "screenshot"
+  pdf_microsim_base_url: null      # set to the static-web URL for live QR targets
+  pdf_include_final: false         # true to embed the final assessment in the PDF
+```
 
 ### requirements.txt
 
@@ -312,3 +331,11 @@ Outputs: A repo with four unit folders, course-config.yaml configured for static
   default of `1` and a comment pointing to the institution's Canvas admin.
   sync-state.dry-run.json added to .gitignore so dry-run inspection files
   stay out of git.
+
+### 1.2 (2026-05-05)
+- Phase 12: PDF .env.example is comment-only (no required vars). When
+  `target_platform` is `pdf`, course-config.yaml gets pdf_page_size,
+  pdf_microsim_strategy, pdf_microsim_base_url, pdf_include_final with
+  documented defaults. requirements.txt for pdf platforms adds weasyprint
+  and qrcode[pil]. .gitignore template adds .mermaid-svg-cache/ and keeps
+  build/ excluded so generated PDFs stay out of git.

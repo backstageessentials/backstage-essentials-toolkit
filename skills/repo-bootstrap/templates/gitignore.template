@@ -19,6 +19,9 @@ __pycache__/
 sync-state.json
 sync-state.dry-run.json
 
+# PDF build cache (regenerated each run)
+.mermaid-svg-cache/
+
 # Claude Code local config (machine specific)
 .claude/settings.local.json
 
@@ -33,7 +36,7 @@ sync-state.dry-run.json
 node_modules/
 npm-debug.log
 
-# Build outputs (only if you build local previews)
-site/
+# Build outputs (PDFs, static-web previews, etc.)
 build/
+site/
 dist/

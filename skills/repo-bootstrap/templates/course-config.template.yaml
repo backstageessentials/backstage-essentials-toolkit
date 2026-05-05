@@ -22,4 +22,14 @@ course:
   #                          # On hosted Canvas the root account is 1.
   #                          # On an institutional instance, ask your Canvas
   #                          # admin which sub-account ID you have rights to.
+  #
+  # PDF:
+  #   pdf_page_size: "letter"          # "letter" (default) or "a4"
+  #   pdf_microsim_strategy: "qr"      # "qr" (default) or "screenshot"
+  #   pdf_microsim_base_url: null      # The public URL of the course's
+  #                                    # static-web companion. QR codes link to
+  #                                    # <base_url>/unit-NN-microsims/<file>.
+  #   pdf_include_final: false         # true to embed the course final at the
+  #                                    # back of the PDF (questions only;
+  #                                    # answers are hidden via CSS).
 {PLATFORM_FIELDS}

@@ -25,6 +25,17 @@ import yaml
 from markdown_it import MarkdownIt
 from markdown_it.token import Token
 
+from .layout import (
+    PROGRESS_AND_ANIMATION_JS,
+    reading_time_minutes,
+    render_footer,
+    render_hero,
+    render_lesson_card,
+    render_sidebar,
+    render_unit_card,
+    render_unit_card_grid,
+)
+
 
 BRAND_COLORS = {
     "brand": "#D6006C",
@@ -46,6 +57,13 @@ class CourseMeta:
     # for every unit's knowledge-check.yaml in this course. A unit's quiz
     # YAML may override via its own `mode:` key. Falls back to "study".
     knowledge_check_mode: str = "study"
+    # Phase 18 visual polish: optional course-config fields. All graceful
+    # defaults so existing courses render cleanly without explicit values.
+    cover_image_url: str = ""
+    logo_url: str = ""
+    brand_secondary_color: str = ""
+    license_text: str = ""
+    author_credit: str = "Backstage Essentials LLC"
 
 
 @dataclass
@@ -242,6 +260,11 @@ def _load_course_meta(course_root: Path) -> CourseMeta:
     slug = course.get("slug", "")
     kc_mode_raw = course.get("knowledge_check_mode")
     kc_mode = kc_mode_raw if kc_mode_raw in ("study", "test") else "study"
+    cover_image_url = course.get("cover_image_url") or ""
+    logo_url = course.get("logo_url") or ""
+    brand_secondary_color = course.get("brand_secondary_color") or ""
+    license_text = course.get("license_text") or ""
+    author_credit = course.get("author_credit") or "Backstage Essentials LLC"
 
     tagline = ""
     desc_path = course_root / "course-description.md"
@@ -254,276 +277,34 @@ def _load_course_meta(course_root: Path) -> CourseMeta:
             tagline = stripped.replace("\n", " ")
             break
     return CourseMeta(course_name=name, tagline=tagline, course_slug=slug,
-                      knowledge_check_mode=kc_mode)
+                      knowledge_check_mode=kc_mode,
+                      cover_image_url=cover_image_url,
+                      logo_url=logo_url,
+                      brand_secondary_color=brand_secondary_color,
+                      license_text=license_text,
+                      author_credit=author_credit)
 
 
 # --------------------------------------------------------------------------
 # Page assembly.
 # --------------------------------------------------------------------------
 
-_CSS = """\
-:root {
-  --brand: #D6006C;
-  --bg: #FFFFFF;
-  --text: #0A0A0A;
-  --muted: rgba(10, 10, 10, 0.65);
-  --rule: #eaeaea;
-}
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
-  line-height: 1.6;
-  font-size: 17px;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-.container {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 32px 24px;
-}
-@media (min-width: 720px) {
-  .container { padding: 48px 32px; }
-}
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 800;
-  line-height: 1.25;
-  margin: 1.6em 0 0.5em 0;
-}
-h1 {
-  font-size: 2rem;
-  color: var(--brand);
-  border-bottom: 1px solid var(--brand);
-  padding-bottom: 0.5em;
-  margin-top: 0;
-}
-h2 {
-  font-size: 1.5rem;
-  color: var(--brand);
-  margin-top: 2.2em;
-}
-h3 { font-size: 1.25rem; color: var(--text); }
-h4 { font-size: 1.05rem; color: var(--text); margin-top: 1.4em; }
-h5 { font-size: 1rem; color: var(--text); }
-h6 { font-size: 0.95rem; color: var(--muted); }
-p { margin: 0.8em 0; }
-.tagline {
-  font-size: 1.1rem;
-  color: var(--muted);
-  margin: 0.5em 0 2em 0;
-}
-a {
-  color: var(--brand);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
-}
-a:hover { text-decoration-thickness: 2px; }
-ul, ol { padding-left: 1.5em; }
-li { margin: 0.3em 0; }
-code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  background: rgba(214, 0, 108, 0.08);
-  padding: 0.1em 0.3em;
-  border-radius: 3px;
-  font-size: 0.92em;
-}
-pre {
-  background: #f6f6f6;
-  padding: 12px 16px;
-  border-radius: 6px;
-  overflow-x: auto;
-  font-size: 0.9em;
-  line-height: 1.45;
-  margin: 1em 0;
-}
-pre code {
-  background: none;
-  padding: 0;
-  font-size: 1em;
-}
-blockquote {
-  border-left: 3px solid var(--brand);
-  margin: 1em 0;
-  padding: 0.2em 1em;
-  color: var(--muted);
-}
-.lesson {
-  margin-bottom: 2.5em;
-  padding-bottom: 1.5em;
-  border-bottom: 1px solid var(--rule);
-}
-.lesson:last-of-type {
-  border-bottom: none;
-  margin-bottom: 1em;
-}
-.mermaid {
-  margin: 1.5em auto;
-  text-align: center;
-  display: flex;
-  justify-content: center;
-  font-family: system-ui, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
-}
-.mermaid svg {
-  max-width: 100%;
-  height: auto;
-}
-details {
-  margin: 1em 0 0 0;
-  padding: 0.8em 1em;
-  background: rgba(214, 0, 108, 0.04);
-  border-left: 3px solid var(--brand);
-  border-radius: 0 4px 4px 0;
-}
-details summary {
-  cursor: pointer;
-  font-weight: 700;
-  color: var(--brand);
-  list-style: none;
-}
-details summary::-webkit-details-marker { display: none; }
-details summary::before {
-  content: "\\25B6 ";
-  font-size: 0.8em;
-  margin-right: 4px;
-  display: inline-block;
-}
-details[open] summary::before { content: "\\25BC "; }
-details > p:first-of-type { margin-top: 0.6em; }
-.question { font-weight: 600; margin: 0.5em 0 0.4em 0; }
-.choices { margin: 0.3em 0 0.6em 0; }
-.kc-list { padding-left: 1.6em; }
-.kc-list > li { margin-bottom: 1.8em; padding-left: 0.4em; }
-.kc-list > li::marker { font-weight: 800; color: var(--brand); }
+_STYLE_CSS_PATH = Path(__file__).resolve().parent / "style.css"
+_CSS_CACHE: Optional[str] = None
 
-/* Test mode (course final): interactive form with radios, score, reveal. */
-.test-section {
-  margin-top: 2em;
-  padding-top: 1.4em;
-  border-top: 2px solid var(--brand);
-}
-.test-meta {
-  font-size: 0.92rem; color: var(--muted);
-  background: rgba(214, 0, 108, 0.04);
-  border-radius: 6px; padding: 10px 14px; margin: 0 0 1em 0;
-}
-.test-progress {
-  position: sticky; top: 0; z-index: 5;
-  background: var(--bg);
-  padding: 10px 14px; margin: 0 0 1em 0;
-  border: 1px solid var(--brand); border-radius: 6px;
-  font-weight: 700; color: var(--brand);
-  display: flex; justify-content: space-between; align-items: center;
-}
-.test-question {
-  margin: 0 0 1.6em 0;
-  padding: 14px 16px;
-  border: 1px solid var(--rule); border-radius: 8px;
-}
-.test-question .question { margin: 0 0 0.6em 0; }
-.test-choices { list-style: none; padding-left: 0; margin: 0.4em 0 0 0; }
-.test-choices > li { margin: 0.35em 0; padding: 0; }
-.test-choices label {
-  display: block; cursor: pointer;
-  padding: 8px 12px; border-radius: 6px; border: 1px solid transparent;
-  transition: background 0.12s, border-color 0.12s;
-}
-.test-choices label:hover { background: rgba(214, 0, 108, 0.04); }
-.test-choices input[type="radio"] {
-  margin-right: 10px;
-  accent-color: var(--brand);
-  transform: translateY(1px);
-}
-.test-choices label.choice-correct {
-  background: rgba(0, 128, 0, 0.10);
-  border-color: #008000;
-}
-.test-choices label.choice-wrong {
-  background: rgba(187, 0, 0, 0.10);
-  border-color: #BB0000;
-}
-.test-choices label.choice-correct::after,
-.test-choices label.choice-wrong::after {
-  font-weight: 700; margin-left: 8px; font-size: 0.85rem;
-}
-.test-choices label.choice-correct::after {
-  content: "Correct"; color: #008000;
-}
-.test-choices label.choice-wrong::after {
-  content: "Your pick"; color: #BB0000;
-}
-.test-explanation {
-  margin-top: 0.6em; padding: 10px 14px;
-  background: rgba(214, 0, 108, 0.04);
-  border-left: 3px solid var(--brand);
-  border-radius: 0 6px 6px 0;
-  font-size: 0.95rem;
-}
-.test-submit {
-  display: block; width: 100%; max-width: 320px; margin: 1.4em auto 0 auto;
-  padding: 14px 24px; font-family: inherit; font-size: 1rem; font-weight: 700;
-  background: var(--brand); color: white; border: none;
-  border-radius: 8px; cursor: pointer;
-}
-.test-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-.test-results-panel {
-  margin-top: 1.4em; padding: 24px 24px;
-  border: 2px solid var(--brand); border-radius: 10px;
-  text-align: center;
-}
-.test-results-panel .score {
-  font-size: 2.4rem; font-weight: 800; color: var(--brand);
-  margin: 0 0 0.2em 0;
-}
-.test-results-panel .pct {
-  font-size: 1.1rem; color: var(--muted); margin: 0 0 0.8em 0;
-}
-.test-passfail {
-  display: inline-block; padding: 6px 16px; border-radius: 999px;
-  font-weight: 700; font-size: 0.95rem; margin: 0 0 1em 0;
-}
-.test-passfail.pass { background: rgba(0, 128, 0, 0.12); color: #008000; }
-.test-passfail.fail { background: rgba(187, 0, 0, 0.12); color: #BB0000; }
-.test-reveal-btn {
-  font-family: inherit; font-size: 0.95rem; font-weight: 600;
-  padding: 10px 18px; border-radius: 6px; cursor: pointer;
-  background: var(--bg); color: var(--brand);
-  border: 2px solid var(--brand);
-}
-.test-empty {
-  padding: 24px; border: 1px dashed var(--brand); border-radius: 8px;
-  background: rgba(214, 0, 108, 0.03);
-  text-align: center; color: var(--muted);
-}
-.test-attempt-counter {
-  font-size: 0.95rem; color: var(--brand); font-weight: 600;
-  margin: 0 0 0.6em 0;
-}
-.test-lockout {
-  padding: 18px; border-radius: 8px; border: 1px solid var(--rule);
-  background: rgba(187, 0, 0, 0.05); color: #BB0000;
-  margin: 1em 0;
-}
-.test-lockout-message { margin: 0; font-weight: 500; }
-.test-retry-prompt {
-  font-size: 0.95rem; color: var(--muted); margin: 0.8em 0 0.4em 0;
-}
-.test-retry-btn {
-  font-family: inherit; font-size: 0.95rem; font-weight: 700;
-  padding: 10px 18px; border-radius: 6px; cursor: pointer;
-  background: var(--brand); color: var(--bg); border: none;
-  margin-right: 0.6em;
-}
-.test-reset-btn {
-  font-family: inherit; font-size: 0.85rem;
-  padding: 6px 12px; border-radius: 4px; cursor: pointer;
-  background: var(--bg); color: var(--muted); border: 1px solid var(--rule);
-  margin-top: 1em;
-}
-"""
+
+def _load_css() -> str:
+    """Read style.css from this skill's lib/ folder.
+
+    Cached after first read so render-heavy code paths do not re-hit disk.
+    """
+    global _CSS_CACHE
+    if _CSS_CACHE is None:
+        try:
+            _CSS_CACHE = _STYLE_CSS_PATH.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            _CSS_CACHE = "/* style.css not found */"
+    return _CSS_CACHE
 
 _MERMAID_HEAD = '<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>'
 
@@ -1202,86 +983,160 @@ def _safe_q_id(raw: str) -> str:
     return s or "q"
 
 
+def _make_units_summary(course_root: Path) -> list[dict]:
+    """Return one summary dict per unit: number, title, href, lesson_count, summary."""
+    out: list[dict] = []
+    content_root = course_root / "content"
+    if not content_root.exists():
+        return out
+    for unit_folder in sorted(content_root.glob("unit-*")):
+        if not unit_folder.is_dir():
+            continue
+        unit_yaml_path = unit_folder / "unit.yaml"
+        if not unit_yaml_path.exists():
+            continue
+        raw = (yaml.safe_load(unit_yaml_path.read_text(encoding="utf-8")) or {}).get("unit", {})
+        n = int(raw.get("number", 0) or 0)
+        title = str(raw.get("title", unit_folder.name))
+        outcomes = raw.get("learning_outcomes") or []
+        summary = outcomes[0] if outcomes else ""
+        lessons_dir = unit_folder / "lessons"
+        lesson_count = len(list(lessons_dir.glob("*.md"))) if lessons_dir.exists() else 0
+        out.append({
+            "number": n,
+            "title": title,
+            "href": f"unit-{n}.html",
+            "lesson_count": lesson_count,
+            "summary": summary,
+            "folder": unit_folder,
+        })
+    return sorted(out, key=lambda u: u["number"])
+
+
 def render_unit_preview(unit_folder: Path, course_root: Optional[Path] = None) -> str:
-    """Render one unit to a self-contained HTML page string."""
+    """Phase 18: render one unit page with hero, sidebar, lesson cards, KC, footer."""
     if course_root is None:
         course_root = unit_folder.parent.parent
     course_meta = _load_course_meta(course_root)
     unit = _load_unit(unit_folder)
+    units_summary = _make_units_summary(course_root)
+    final_data = _load_course_final(course_root)
+    has_final = final_data is not None
     md = _make_md()
 
-    page_title = f"{course_meta.course_name}, Unit {unit.number} Preview"
-    course_h1 = _esc(course_meta.course_name)
-    unit_h2 = _esc(f"Unit {unit.number}: {unit.title}")
-    tagline_html = (
-        f'    <p class="tagline">{_esc(course_meta.tagline)}</p>\n'
-        if course_meta.tagline else ""
+    # Lesson nav for sidebar.
+    current_unit_lessons = []
+    for i, lesson in enumerate(unit.lessons, 1):
+        current_unit_lessons.append({
+            "index": i,
+            "title": lesson.title,
+            "anchor": f"lesson-{i}",
+            "lesson_id": f"u{unit.number}-l{i}",
+        })
+
+    sidebar_html = render_sidebar(
+        units=[{"number": u["number"], "title": u["title"], "href": u["href"]}
+               for u in units_summary],
+        current_unit_number=unit.number,
+        current_unit_lessons=current_unit_lessons,
+        has_final=has_final,
+        course_slug=course_meta.course_slug,
     )
 
-    lesson_sections: list[str] = []
-    for lesson in unit.lessons:
+    hero_html = render_hero(
+        course_name=unit.title,
+        tagline=course_meta.tagline if not course_meta.tagline else "",
+        cover_image_url=course_meta.cover_image_url or None,
+        eyebrow=f"{course_meta.course_name} - Unit {unit.number}",
+        compact=True,
+    )
+
+    # Lesson cards.
+    lesson_cards = []
+    for i, lesson in enumerate(unit.lessons, 1):
         expanded = _expand_microsim_directives(lesson.body_markdown, unit.number)
-        body_html = _render_with_mermaid(md, expanded)
-        lesson_sections.append(
-            '<section class="lesson">\n'
-            f"  <h3>{_esc(lesson.title)}</h3>\n"
-            f"{body_html}"
-            "</section>"
+        body_html = _render_with_mermaid(md, expanded, demote_headings=True)
+        anchor = f"lesson-{i}"
+        lesson_cards.append(
+            render_lesson_card(
+                unit_number=unit.number,
+                lesson_index=i,
+                lesson_title=lesson.title,
+                body_html=body_html,
+                anchor_id=anchor,
+            )
         )
-    lessons_block = "\n\n".join(lesson_sections) if lesson_sections else (
-        "<p><em>No lessons drafted yet.</em></p>"
+    lessons_block = "\n\n".join(lesson_cards) if lesson_cards else (
+        '<p class="empty"><em>Lessons coming soon.</em></p>'
     )
 
+    # Knowledge check (study or test).
     kc_mode = resolve_kc_mode(unit, course_meta)
     test_js = ""
     if unit.knowledge_check:
         if kc_mode == "test":
-            kc_block = render_test_section(
+            kc_inner = render_test_section(
                 unit.knowledge_check_data,
                 section_id=f"unit-{unit.number}-kc-test",
                 heading=unit.knowledge_check_title,
                 course_slug=course_meta.course_slug,
                 simple_mode=True,
             )
+            kc_html = (
+                '<section class="kc fade-in" id="kc">\n'
+                + kc_inner
+                + '\n</section>'
+            )
             test_js = _TEST_MODE_JS
         else:
             kc_items = "\n".join(
                 _render_question(i, q) for i, q in enumerate(unit.knowledge_check)
             )
-            kc_block = (
-                f"    <h2>{_esc(unit.knowledge_check_title)}</h2>\n\n"
-                f'    <ol class="kc-list">\n{kc_items}\n</ol>'
+            kc_html = (
+                '<section class="kc fade-in" id="kc">\n'
+                f'  <h2>{_esc(unit.knowledge_check_title)}</h2>\n'
+                f'  <ol class="kc-list">\n{kc_items}\n  </ol>\n'
+                '</section>'
             )
     else:
-        kc_block = (
-            f"    <h2>{_esc(unit.knowledge_check_title)}</h2>\n"
-            "    <p><em>No knowledge check questions yet.</em></p>"
+        kc_html = (
+            '<section class="kc fade-in" id="kc">\n'
+            f'  <h2>{_esc(unit.knowledge_check_title)}</h2>\n'
+            '  <p><em>No knowledge check questions yet.</em></p>\n'
+            '</section>'
         )
+
+    footer_html = render_footer(
+        course_name=course_meta.course_name,
+        course_slug=course_meta.course_slug,
+        logo_url=course_meta.logo_url or None,
+        author_credit=course_meta.author_credit,
+        license_text=course_meta.license_text or None,
+        units=[{"number": u["number"], "title": u["title"], "href": u["href"]}
+               for u in units_summary],
+    )
+
+    page_title = f"{course_meta.course_name} - Unit {unit.number}: {unit.title}"
 
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{_esc(page_title)}</title>
-  <style>
-{_CSS}</style>
-  {_MERMAID_HEAD}
+  {_render_head(page_title, course_meta.brand_secondary_color)}
 </head>
-<body>
-  <div class="container">
-    <h1>{course_h1}</h1>
-    <h2>{unit_h2}</h2>
-{tagline_html}
-    <h2>Lessons</h2>
-
+<body id="top">
+  {hero_html}
+  <div class="page-shell with-sidebar">
+    {sidebar_html}
+    <main>
 {lessons_block}
 
-{kc_block}
-
+{kc_html}
+    </main>
   </div>
+  {footer_html}
   {_MERMAID_INIT}
   {test_js}
+  {PROGRESS_AND_ANIMATION_JS}
 </body>
 </html>
 """
@@ -1330,42 +1185,41 @@ def render_all_units(course_root: Path, output_dir: Path,
 # Course-level preview: every unit on one page with a TOC.
 # --------------------------------------------------------------------------
 
-_COURSE_CSS_OVERRIDES = """\
-html { scroll-behavior: smooth; }
-.container { max-width: 800px; }
-.course-tagline {
-  font-size: 1.05rem; color: var(--muted); font-style: italic;
-  margin: 0.4em 0 1.6em 0;
-}
-.toc {
-  background: rgba(214, 0, 108, 0.04);
-  border-left: 3px solid var(--brand);
-  border-radius: 0 6px 6px 0;
-  padding: 12px 18px 12px 36px;
-  margin: 0 0 2.4em 0;
-  font-size: 0.98rem;
-}
-.toc li { margin: 0.35em 0; }
-.toc a { font-weight: 600; }
-.unit { padding-top: 1em; }
-.unit + .unit { margin-top: 1em; border-top: 1px solid var(--rule); }
-.outcomes {
-  font-size: 0.95rem; color: var(--muted);
-  background: rgba(214, 0, 108, 0.03);
-  border-radius: 6px; padding: 10px 16px 10px 32px;
-  margin: 0.4em 0 1.4em 0;
-}
-.outcomes li { margin: 0.25em 0; }
-.empty {
-  color: var(--muted); font-size: 0.95rem; margin: 1em 0;
-}
-.back-to-top {
-  display: block; text-align: center;
-  margin: 2.4em 0 0.6em 0; padding: 14px 0;
-  border-top: 1px solid var(--rule);
-  font-size: 0.9rem;
-}
-"""
+# Phase 18: course CSS overrides moved into style.css alongside the
+# polish styles. The constant remains as an empty string so any older
+# string-formatted templates still using it keep rendering.
+_COURSE_CSS_OVERRIDES = ""
+
+
+_INTER_FONT_HEAD = (
+    '<link rel="preconnect" href="https://fonts.googleapis.com">\n'
+    '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
+    '<link href="https://fonts.googleapis.com/css2?'
+    'family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">'
+)
+
+
+def _render_head(page_title: str, brand_secondary_color: str = "") -> str:
+    """Common <head> contents: meta, title, fonts, style.css, Mermaid CDN.
+
+    brand_secondary_color: optional hex color injected as a CSS variable
+    override so courses can supply their own accent without editing
+    style.css.
+    """
+    extra_root = ""
+    if brand_secondary_color:
+        extra_root = (
+            f'<style>:root {{ --brand-2: {_esc(brand_secondary_color)}; }}</style>\n'
+        )
+    return (
+        '<meta charset="UTF-8">\n'
+        '  <meta name="viewport" content="width=device-width, initial-scale=1">\n'
+        f'  <title>{_esc(page_title)}</title>\n'
+        f'  {_INTER_FONT_HEAD}\n'
+        f'  <style>\n{_load_css()}</style>\n'
+        f'  {extra_root}'
+        f'  {_MERMAID_HEAD}'
+    )
 
 
 def _gather_units(course_root: Path) -> list[tuple[Path, Unit, dict]]:
@@ -1386,163 +1240,120 @@ def _gather_units(course_root: Path) -> list[tuple[Path, Unit, dict]]:
 
 
 def render_course_preview(course_root: Path) -> str:
-    """Render the entire course (every unit, plus the course final) into one
-    self-contained HTML page string."""
+    """Phase 18: render the landing page (hero + unit-card grid + footer).
+
+    The all-in-one single-page output of earlier phases is replaced by a
+    multi-page bundle. This function returns the index.html body. Per-unit
+    pages and the final page are rendered separately by render_unit_preview
+    and render_final_preview; write_course_preview ties them together.
+    """
     course_meta = _load_course_meta(course_root)
-    md = _make_md()
-    units_info = _gather_units(course_root)
+    units_summary = _make_units_summary(course_root)
     final_data = _load_course_final(course_root)
-    final_name = (final_data or {}).get("name") or "Final Assessment"
     has_final = final_data is not None
 
-    course_h1 = _esc(course_meta.course_name)
-    page_title = f"{course_meta.course_name} Course Preview"
-    tagline_html = (
-        f'    <p class="course-tagline">{_esc(course_meta.tagline)}</p>\n'
-        if course_meta.tagline else ""
+    page_title = f"{course_meta.course_name}"
+
+    meta_items: list[str] = []
+    n_units = len(units_summary)
+    if n_units:
+        meta_items.append(
+            f"{n_units} unit" + ("s" if n_units != 1 else "")
+        )
+    if has_final:
+        meta_items.append("Final assessment included")
+
+    hero_html = render_hero(
+        course_name=course_meta.course_name,
+        tagline=course_meta.tagline,
+        cover_image_url=course_meta.cover_image_url or None,
+        eyebrow="Course",
+        meta_items=meta_items or None,
     )
 
-    # Table of contents
-    toc_items = [
-        f'<li><a href="#unit-{u.number}">Unit {u.number}: {_esc(u.title)}</a></li>'
-        for _folder, u, _raw in units_info
-    ]
-    if has_final:
-        toc_items.append(
-            f'<li><a href="#course-final-test">{_esc(final_name)}</a></li>'
+    cards_html = render_unit_card_grid([
+        render_unit_card(
+            unit_number=u["number"],
+            unit_title=u["title"],
+            summary=u["summary"],
+            lesson_count=u["lesson_count"],
+            href=u["href"],
+            accent_index=u["number"],
         )
-    toc_html = (
-        "<nav>\n"
-        "  <h2>Contents</h2>\n"
-        f'  <ol class="toc">\n    ' + "\n    ".join(toc_items) + "\n  </ol>\n"
-        "</nav>"
-    ) if toc_items else ""
+        for u in units_summary
+    ])
 
-    # Per-unit sections
-    unit_sections: list[str] = []
-    any_test_mode_kc = False
-    for unit_folder, unit, raw in units_info:
-        outcomes = raw.get("learning_outcomes") or []
-        outcomes_html = ""
-        if outcomes:
-            items = "\n    ".join(f"<li>{_esc(o)}</li>" for o in outcomes)
-            outcomes_html = (
-                f'  <ul class="outcomes">\n    {items}\n  </ul>'
-            )
-
-        if unit.lessons:
-            blocks = []
-            for lesson in unit.lessons:
-                expanded = _expand_microsim_directives(lesson.body_markdown, unit.number)
-                body_html = _render_with_mermaid(md, expanded)
-                blocks.append(
-                    '  <section class="lesson">\n'
-                    f"    <h3>{_esc(lesson.title)}</h3>\n"
-                    f"{body_html}"
-                    "  </section>"
-                )
-            lessons_html = "\n".join(blocks)
-        else:
-            lessons_html = '  <p class="empty"><em>Lessons coming soon.</em></p>'
-
-        kc_test_mode_used = False
-        if unit.knowledge_check:
-            kc_mode = resolve_kc_mode(unit, course_meta)
-            if kc_mode == "test":
-                kc_test_mode_used = True
-                kc_html = (
-                    '  <section class="kc">\n'
-                    + render_test_section(
-                        unit.knowledge_check_data,
-                        section_id=f"unit-{unit.number}-kc-test",
-                        heading=unit.knowledge_check_title,
-                        course_slug=course_meta.course_slug,
-                        simple_mode=True,
-                    )
-                    + '\n  </section>'
-                )
-            else:
-                kc_items = "\n".join(
-                    _render_question(i, q) for i, q in enumerate(unit.knowledge_check)
-                )
-                kc_html = (
-                    '  <section class="kc">\n'
-                    '    <h3>Knowledge Check</h3>\n'
-                    f'    <ol class="kc-list">\n{kc_items}\n    </ol>\n'
-                    '  </section>'
-                )
-        else:
-            kc_html = ""
-
-        if kc_test_mode_used:
-            any_test_mode_kc = True
-
-        unit_sections.append(
-            f'<section class="unit" id="unit-{unit.number}">\n'
-            f'  <h2>Unit {unit.number}: {_esc(unit.title)}</h2>\n'
-            f'{outcomes_html}\n'
-            f'{lessons_html}\n'
-            f'{kc_html}\n'
+    final_callout_html = ""
+    if has_final:
+        final_name = final_data.get("name") or "Course Final Assessment"
+        final_callout_html = (
+            '<section class="final-callout fade-in" '
+            'style="margin-top:2.4em;padding:28px 32px;border:1px solid var(--rule);'
+            'border-radius:var(--radius-md);background:var(--bg-soft);">\n'
+            '  <h2 style="margin-top:0;">Course Final Assessment</h2>\n'
+            f'  <p>{_esc(final_name)} is available once you have worked '
+            'through the units.</p>\n'
+            '  <a class="cta" href="final.html" '
+            'style="display:inline-block;background:var(--brand);color:#fff;'
+            'padding:12px 22px;border-radius:var(--radius-sm);'
+            'text-decoration:none;font-weight:700;">Open the final assessment</a>\n'
             '</section>'
         )
 
-    units_html = "\n\n".join(unit_sections) if unit_sections else (
-        '<p class="empty"><em>No units found in this course.</em></p>'
+    footer_html = render_footer(
+        course_name=course_meta.course_name,
+        course_slug=course_meta.course_slug,
+        logo_url=course_meta.logo_url or None,
+        author_credit=course_meta.author_credit,
+        license_text=course_meta.license_text or None,
+        units=[{"number": u["number"], "title": u["title"], "href": u["href"]}
+               for u in units_summary],
     )
-
-    final_html = ""
-    test_js = ""
-    if has_final:
-        final_html = render_test_section(
-            final_data,
-            section_id="course-final-test",
-            heading=final_name,
-            course_slug=course_meta.course_slug,
-        )
-        test_js = _TEST_MODE_JS
-    elif any_test_mode_kc:
-        # No final, but at least one KC is in test mode; we still need the JS.
-        test_js = _TEST_MODE_JS
 
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{_esc(page_title)}</title>
-  <style>
-{_CSS}{_COURSE_CSS_OVERRIDES}</style>
-  {_MERMAID_HEAD}
+  {_render_head(page_title, course_meta.brand_secondary_color)}
 </head>
 <body id="top">
-  <div class="container">
-    <h1>{course_h1}</h1>
-{tagline_html}
-{toc_html}
-
-{units_html}
-
-{final_html}
-
-    <a class="back-to-top" href="#top">Back to top &uarr;</a>
-  </div>
+  {hero_html}
+  <main class="page-shell">
+    <section class="fade-in">
+      <h2>Units</h2>
+      {cards_html}
+    </section>
+    {final_callout_html}
+  </main>
+  {footer_html}
   {_MERMAID_INIT}
-  {test_js}
+  {PROGRESS_AND_ANIMATION_JS}
 </body>
 </html>
 """
 
 
 def write_course_preview(course_root: Path, output_dir: Path) -> Path:
-    """Render the course-level preview, write it to output_dir/course-preview.html,
-    and copy every unit's microsims folder to output_dir/unit-NN-microsims/.
-    Returns the path to the written HTML file.
+    """Phase 18: write the multi-page bundle to output_dir.
+
+    Files written:
+      - index.html (landing: hero + unit cards + footer)
+      - unit-N.html for each unit (hero + sidebar + lesson cards + KC + footer)
+      - final.html (when exam/course-final.yaml exists)
+      - unit-NN-microsims/ folders (copied from each unit's microsims/)
+
+    The legacy single-file course-preview.html is removed if present, since
+    index.html now serves the landing role.
+
+    Returns the path to index.html (the natural deploy entry point).
     """
     output_dir.mkdir(parents=True, exist_ok=True)
-    html = render_course_preview(course_root)
-    out_path = output_dir / "course-preview.html"
-    out_path.write_text(html, encoding="utf-8")
 
+    # Landing page.
+    index_html = render_course_preview(course_root)
+    index_path = output_dir / "index.html"
+    index_path.write_text(index_html, encoding="utf-8")
+
+    # Per-unit pages + microsim folder copies.
     content_root = course_root / "content"
     if content_root.exists():
         for unit_folder in sorted(content_root.glob("unit-*")):
@@ -1553,6 +1364,10 @@ def write_course_preview(course_root: Path, output_dir: Path) -> Path:
                 continue
             meta = (yaml.safe_load(unit_yaml_path.read_text(encoding="utf-8")) or {}).get("unit", {})
             n = int(meta.get("number", 0) or 0)
+
+            unit_html = render_unit_preview(unit_folder, course_root)
+            (output_dir / f"unit-{n}.html").write_text(unit_html, encoding="utf-8")
+
             microsims_src = unit_folder / "microsims"
             if microsims_src.exists() and microsims_src.is_dir():
                 microsims_dst = output_dir / f"unit-{n:02d}-microsims"
@@ -1560,7 +1375,18 @@ def write_course_preview(course_root: Path, output_dir: Path) -> Path:
                     shutil.rmtree(microsims_dst)
                 shutil.copytree(microsims_src, microsims_dst)
 
-    return out_path
+    # Final assessment page.
+    final_yaml_path = course_root / "exam" / "course-final.yaml"
+    if final_yaml_path.exists():
+        final_html = render_final_preview(course_root)
+        (output_dir / "final.html").write_text(final_html, encoding="utf-8")
+
+    # Drop the legacy single-page output: index.html now owns the landing role.
+    legacy = output_dir / "course-preview.html"
+    if legacy.exists():
+        legacy.unlink()
+
+    return index_path
 
 
 # --------------------------------------------------------------------------
@@ -1568,12 +1394,35 @@ def write_course_preview(course_root: Path, output_dir: Path) -> Path:
 # --------------------------------------------------------------------------
 
 def render_final_preview(course_root: Path) -> str:
-    """Render a self-contained HTML page that shows only the course final."""
+    """Render a polished page showing the course final assessment.
+
+    Includes the hero, the sticky sidebar (so students can navigate back
+    to units), the test section itself, and the branded footer. Used by
+    write_course_preview to write final.html and by write_final_preview
+    to write the legacy final-preview.html alias.
+    """
     course_meta = _load_course_meta(course_root)
     final_data = _load_course_final(course_root)
-    course_h1 = _esc(course_meta.course_name)
+    units_summary = _make_units_summary(course_root)
     final_name = (final_data or {}).get("name") or "Final Assessment"
-    page_title = f"{course_meta.course_name} Final Preview"
+    page_title = f"{course_meta.course_name} - Final Assessment"
+
+    hero_html = render_hero(
+        course_name="Course Final Assessment",
+        tagline="",
+        cover_image_url=course_meta.cover_image_url or None,
+        eyebrow=course_meta.course_name,
+        compact=True,
+    )
+
+    sidebar_html = render_sidebar(
+        units=[{"number": u["number"], "title": u["title"], "href": u["href"]}
+               for u in units_summary],
+        current_unit_number=None,
+        current_unit_lessons=None,
+        has_final=True,
+        course_slug=course_meta.course_slug,
+    )
 
     if final_data is None:
         body_html = (
@@ -1595,29 +1444,43 @@ def render_final_preview(course_root: Path) -> str:
         )
         test_js = _TEST_MODE_JS
 
+    footer_html = render_footer(
+        course_name=course_meta.course_name,
+        course_slug=course_meta.course_slug,
+        logo_url=course_meta.logo_url or None,
+        author_credit=course_meta.author_credit,
+        license_text=course_meta.license_text or None,
+        units=[{"number": u["number"], "title": u["title"], "href": u["href"]}
+               for u in units_summary],
+    )
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{_esc(page_title)}</title>
-  <style>
-{_CSS}{_COURSE_CSS_OVERRIDES}</style>
+  {_render_head(page_title, course_meta.brand_secondary_color)}
 </head>
 <body id="top">
-  <div class="container">
-    <h1>{course_h1}</h1>
-{body_html}
-    <a class="back-to-top" href="#top">Back to top &uarr;</a>
+  {hero_html}
+  <div class="page-shell with-sidebar">
+    {sidebar_html}
+    <main>
+      {body_html}
+    </main>
   </div>
+  {footer_html}
   {test_js}
+  {PROGRESS_AND_ANIMATION_JS}
 </body>
 </html>
 """
 
 
 def write_final_preview(course_root: Path, output_dir: Path) -> Path:
-    """Render the standalone final preview to output_dir/final-preview.html."""
+    """Render the standalone final preview to output_dir/final-preview.html.
+
+    Legacy alias for `bes preview-final`. Same body as final.html written
+    by write_course_preview, but under the older filename.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     html = render_final_preview(course_root)
     out_path = output_dir / "final-preview.html"

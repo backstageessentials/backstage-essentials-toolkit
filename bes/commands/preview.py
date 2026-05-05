@@ -28,15 +28,17 @@ def _output_dir(course_root: Path) -> Path:
 def _import_preview():
     """Import the toolkit's static-web preview module.
 
-    The static-web sync folder is not a Python package importable by name
-    because it has a hyphen, so we add its lib path to sys.path.
+    Phase 18: load lib/ as a package so preview.py can do relative imports
+    (e.g. `from .layout import ...`). The static-web folder has a hyphen
+    in its name and is not directly importable by package path, so we add
+    sync/static-web/ to sys.path and import the lib package from there.
     """
     here = Path(__file__).resolve()
     toolkit_root = here.parent.parent.parent  # bes/commands/preview.py -> toolkit
-    lib_path = toolkit_root / "sync" / "static-web" / "lib"
-    if str(lib_path) not in sys.path:
-        sys.path.insert(0, str(lib_path))
-    import preview as _preview_mod  # noqa: WPS433 (deliberate dynamic import)
+    sw_path = toolkit_root / "sync" / "static-web"
+    if str(sw_path) not in sys.path:
+        sys.path.insert(0, str(sw_path))
+    from lib import preview as _preview_mod  # noqa: WPS433
     return _preview_mod
 
 

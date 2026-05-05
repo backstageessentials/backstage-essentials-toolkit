@@ -195,6 +195,11 @@ class CanvasClient:
             json={"course": {"name": name, "course_code": course_code}},
         )
 
+    def get_course(self, course_id: int) -> dict:
+        """GET /courses/:id. Used by update-existing-course mode (Phase 15)
+        to verify the user has access to the course before pushing content."""
+        return self._request("GET", f"/courses/{course_id}")
+
     def update_course_syllabus(self, course_id: int, syllabus_html: str) -> dict:
         """Set the course syllabus_body to the rendered course description."""
         return self._request(

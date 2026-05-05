@@ -17,11 +17,21 @@ course:
   # that match the chosen platform, with a placeholder value for the user to
   # fill in. Other keys stay commented out so the file remains self-explaining.
   #
-  # Canvas:
-  #   canvas_account_id: 1   # The account ID under which to create the course.
-  #                          # On hosted Canvas the root account is 1.
-  #                          # On an institutional instance, ask your Canvas
-  #                          # admin which sub-account ID you have rights to.
+  # Canvas: choose ONE of two modes (not both).
+  #
+  #   Create-new mode (admin):
+  #     canvas_account_id: 1   # Account ID under which to create the course.
+  #                            # On hosted Canvas the root account is 1; on an
+  #                            # institutional instance, ask your Canvas admin
+  #                            # which sub-account ID you have rights to.
+  #
+  #   Update-existing mode (teacher):
+  #     canvas_course_id: 12345  # Integer ID of an existing course where you
+  #                              # are listed as a teacher. Find it in the URL
+  #                              # when viewing the course on web:
+  #                              # https://your-canvas.instructure.com/courses/12345
+  #                              # The toolkit pushes content into this course
+  #                              # without trying to create a new one.
   #
   # PDF:
   #   pdf_page_size: "letter"          # "letter" (default) or "a4"

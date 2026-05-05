@@ -42,6 +42,8 @@ from .content_parser import (
     parse_unit_yaml,
 )
 from .state import (
+    ModeMismatchError,
+    assert_mode_compatible,
     get_unit_state,
     lesson_needs_update,
     load_state,
@@ -130,12 +132,39 @@ def sync(course_root: Path = None, dry_run: bool = False,
         print(f"  course-config.yaml platform is '{course_meta.get('platform')}', not 'canvas'.")
         return 1
 
-    account_id = course_meta.get("canvas_account_id")
-    if not account_id:
-        print("  course-config.yaml is missing canvas_account_id (required for platform: canvas).")
+    # Phase 15: two modes.
+    # - create mode: canvas_account_id is set; toolkit creates a fresh course.
+    # - update mode: canvas_course_id is set; toolkit pushes into an existing
+    #   course where the user already has teacher rights.
+    account_id_raw = course_meta.get("canvas_account_id")
+    existing_course_id_raw = course_meta.get("canvas_course_id")
+
+    if account_id_raw is not None and existing_course_id_raw is not None:
+        print("  course-config.yaml has BOTH canvas_account_id and "
+              "canvas_course_id. Pick one. See SKILL.md.")
         return 1
-    account_id = str(account_id)
-    print(f"  OK (course: {course_name}, account: {account_id})")
+    if account_id_raw is None and existing_course_id_raw is None:
+        print("  course-config.yaml needs either canvas_account_id (create-new "
+              "mode, admin) or canvas_course_id (update-existing mode, teacher).")
+        return 1
+
+    if existing_course_id_raw is not None:
+        sync_mode = "update"
+        try:
+            existing_course_id = int(existing_course_id_raw)
+        except (TypeError, ValueError):
+            print(f"  canvas_course_id must be an integer, got "
+                  f"{existing_course_id_raw!r}.")
+            return 1
+        account_id = None
+        print(f"  OK (course: {course_name}, mode: update, "
+              f"canvas_course_id: {existing_course_id})")
+    else:
+        sync_mode = "create"
+        account_id = str(account_id_raw)
+        existing_course_id = None
+        print(f"  OK (course: {course_name}, mode: create, "
+              f"canvas_account_id: {account_id})")
 
     if dry_run:
         print()
@@ -164,40 +193,86 @@ def sync(course_root: Path = None, dry_run: bool = False,
     state["api_url"] = client.api_url
     state["account_id"] = account_id
 
-    print("[4/8] Finding or creating course on Canvas...")
-    course_url = None
+    # Phase 15: refuse to silently flip mode or target between syncs.
     try:
-        existing = client.find_course_by_code(account_id, course_slug)
-        summary.api_calls += 1
-        if existing:
-            course_id = existing["id"]
-            state["course_id"] = course_id
-            print(f"  Found (course_id: {course_id})")
-        else:
-            new_course = client.create_course(
-                account_id=account_id,
-                name=course_name,
-                course_code=course_slug,
-            )
-            summary.api_calls += 1
-            course_id = new_course["id"]
-            state["course_id"] = course_id
-            print(f"  Created (course_id: {course_id})")
-        course_url = client.admin_url_for_course(course_id)
-
-        # Push course description as syllabus_body.
-        desc_path_str = course_meta.get("description_path", "./course-description.md")
-        desc_path = Path(desc_path_str)
-        if not desc_path.is_absolute():
-            desc_path = course_root / desc_path
-        syllabus_html = parse_course_description(desc_path)
-        if syllabus_html:
-            client.update_course_syllabus(course_id, syllabus_html)
-            summary.api_calls += 1
-            print("  Syllabus updated from course-description.md")
-    except CanvasError as e:
-        print(f"  Failed: {e}")
+        assert_mode_compatible(
+            state, sync_mode,
+            current_course_id=existing_course_id,
+            current_account_id=account_id,
+        )
+    except ModeMismatchError as e:
+        print(f"  {e}")
         return 1
+
+    if sync_mode == "update":
+        print("[4/8] Attaching to existing Canvas course...")
+        course_url = None
+        try:
+            # Verify the user has access to the course before pushing
+            # 200 questions into nothing.
+            client.get_course(existing_course_id)
+            summary.api_calls += 1
+            course_id = existing_course_id
+            state["course_id"] = course_id
+            state["mode"] = "update"
+            print(f"  OK (course_id: {course_id})")
+            course_url = client.admin_url_for_course(course_id)
+
+            # Update the syllabus from course-description.md.
+            desc_path_str = course_meta.get("description_path",
+                                              "./course-description.md")
+            desc_path = Path(desc_path_str)
+            if not desc_path.is_absolute():
+                desc_path = course_root / desc_path
+            syllabus_html = parse_course_description(desc_path)
+            if syllabus_html:
+                client.update_course_syllabus(course_id, syllabus_html)
+                summary.api_calls += 1
+                print("  Syllabus updated from course-description.md")
+        except CanvasError as e:
+            print(f"  Failed: {e}")
+            print(f"  In update-existing mode, the toolkit needs teacher "
+                  f"access to course_id {existing_course_id}. Verify the ID "
+                  f"is correct and that your CANVAS_API_TOKEN belongs to a "
+                  f"user listed as a teacher on that course.")
+            return 1
+    else:
+        print("[4/8] Finding or creating course on Canvas...")
+        course_url = None
+        try:
+            existing = client.find_course_by_code(account_id, course_slug)
+            summary.api_calls += 1
+            if existing:
+                course_id = existing["id"]
+                state["course_id"] = course_id
+                print(f"  Found (course_id: {course_id})")
+            else:
+                new_course = client.create_course(
+                    account_id=account_id,
+                    name=course_name,
+                    course_code=course_slug,
+                )
+                summary.api_calls += 1
+                course_id = new_course["id"]
+                state["course_id"] = course_id
+                print(f"  Created (course_id: {course_id})")
+            state["mode"] = "create"
+            course_url = client.admin_url_for_course(course_id)
+
+            # Push course description as syllabus_body.
+            desc_path_str = course_meta.get("description_path",
+                                              "./course-description.md")
+            desc_path = Path(desc_path_str)
+            if not desc_path.is_absolute():
+                desc_path = course_root / desc_path
+            syllabus_html = parse_course_description(desc_path)
+            if syllabus_html:
+                client.update_course_syllabus(course_id, syllabus_html)
+                summary.api_calls += 1
+                print("  Syllabus updated from course-description.md")
+        except CanvasError as e:
+            print(f"  Failed: {e}")
+            return 1
 
     print("[5/8] Syncing units (modules + pages + quizzes)...")
     unit_folders = find_unit_folders(course_root / "content")

@@ -39,10 +39,58 @@ The first sync is the slowest (creates everything from scratch). Subsequent sync
 
 Do NOT run sync if:
 - The .env file is missing or has placeholder values
-- course-config.yaml is missing, unparseable, or missing `canvas_account_id`
+- course-config.yaml is missing, unparseable, or missing both `canvas_account_id` and `canvas_course_id`
 - You have not validated the course content first (`bes validate`)
 
 The skill is idempotent. Safe to run repeatedly. Each run makes Canvas match the local files. No duplicates. No data loss.
+
+## Two Modes: Create-New vs Update-Existing
+
+Canvas access policies vary. Account admins can create new courses under an account; classroom teachers usually cannot but they CAN edit courses where they are listed as a teacher. The toolkit supports both:
+
+### Create-new mode (admin)
+
+Set `canvas_account_id` in `course-config.yaml`. The toolkit will POST `/accounts/{id}/courses` to create a fresh course, then push content. Use this when you have admin rights on the Canvas account.
+
+```yaml
+course:
+  platform: "canvas"
+  canvas_account_id: 1   # Required for create-new mode.
+```
+
+### Update-existing mode (teacher)
+
+Set `canvas_course_id` in `course-config.yaml` with the integer ID of an existing Canvas course where you are listed as a teacher. The toolkit will skip the course-creation step entirely and push content into that course instead.
+
+```yaml
+course:
+  platform: "canvas"
+  canvas_course_id: 12345   # Existing course you teach on.
+```
+
+**How to find a Canvas course ID.** Open the course on web. The URL looks like:
+
+```
+https://canvas.instructure.com/courses/12345
+https://your-school.instructure.com/courses/12345
+```
+
+The integer after `/courses/` is the course ID. That's what goes in `canvas_course_id`.
+
+### Picking the right mode
+
+| You are... | Use |
+|------------|-----|
+| Admin on the Canvas account | Either; `canvas_account_id` is the natural fit |
+| Teacher on an existing course but not an admin | `canvas_course_id` |
+| Standing up a brand new course on a fresh Canvas instance you control | `canvas_account_id` |
+| Pushing into a sandbox course your district admin already created for you | `canvas_course_id` |
+
+Setting both fields is a config error. Setting neither is a config error. The validator and the sync command both enforce this.
+
+### Mode is sticky once a sync runs
+
+`sync-state.json` records which mode the course was first synced in. Subsequent syncs must use the same mode and the same target ID. If you really need to switch modes (e.g., archive an old admin-created course and start over inside a teacher-owned course), delete `sync-state.json` first. You will lose change-tracking and the next sync will re-create everything.
 
 ## Authentication: Manual Access Token
 
@@ -72,27 +120,35 @@ Canvas tokens grant the same permissions as the user who created them. Treat the
 
 1. Verify environment:
    - `.env` exists in course root, has `CANVAS_API_URL` and `CANVAS_API_TOKEN` populated with non-placeholder values
-   - `course-config.yaml` exists and parses; `platform` is `canvas`; `canvas_account_id` is set
+   - `course-config.yaml` exists and parses; `platform` is `canvas`; exactly one of `canvas_account_id` (create-new mode) or `canvas_course_id` (update-existing mode) is set
    - All required content files exist (every unit folder has unit.yaml, lessons/, knowledge-check.yaml; exam/course-final.yaml exists)
 
    If any check fails, stop and tell the user what is wrong.
 
 2. Load configuration:
-   - Read course-config.yaml for course metadata (name, slug, completion threshold, canvas_account_id)
+   - Read course-config.yaml for course metadata (name, slug, completion threshold, canvas_account_id OR canvas_course_id)
+   - Decide sync mode: `create` if canvas_account_id is set, `update` if canvas_course_id is set
    - Read .env for credentials
    - Load sync-state.json from course root if it exists; if missing, this is a first-time sync
+   - Refuse to continue if sync-state.json was created in a different mode or against a different target ID
 
 3. Test API authentication:
    - Make a single GET request to `/users/self`
    - If 401 or 403, stop and tell the user the token is wrong or revoked
    - If 429 (rate limited) or 5xx, retry with backoff up to 3 times
 
-4. Find or create the course:
+4a. Find or create the course (create mode):
    - GET `/accounts/:account_id/courses`, look for one with matching `course_code` (we use the course slug as the code)
    - If found: store course_id, plan to UPDATE
    - If not found: POST `/accounts/:account_id/courses` to create, store the new course_id, plan to CREATE
    - PUT `/courses/:course_id` to set `syllabus_body` from course-description.md (rendered to HTML)
-   - Update sync-state.json with course_id
+   - Update sync-state.json with course_id and mode=create
+
+4b. Attach to the existing course (update mode):
+   - GET `/courses/:course_id` to verify the user has access (catches typos and missing teacher rights early)
+   - PUT `/courses/:course_id` to set `syllabus_body` from course-description.md
+   - Update sync-state.json with course_id and mode=update
+   - Skip the POST `/accounts/.../courses` step entirely
 
 5. Sync each unit (module on Canvas):
    For each unit folder in content/, in order:
@@ -297,7 +353,11 @@ Before declaring sync complete, verify:
 
 - **Wrong account_id.** Canvas accounts are hierarchical. `canvas_account_id: 1` works on hosted Canvas (the "Site Admin" account). On an institution instance, ask your Canvas admin for the right sub-account ID. The wrong account_id leads to 401 or 404 on course creation.
 
-- **Missing `canvas_account_id` in course-config.yaml.** The sync skill will refuse to run without it. Add it to course-config.yaml under the `course:` block.
+- **Missing both `canvas_account_id` and `canvas_course_id`.** The sync skill needs exactly one of them. Pick the one that matches your Canvas access (admin → canvas_account_id, teacher → canvas_course_id) and add it to course-config.yaml under the `course:` block.
+
+- **Setting both `canvas_account_id` and `canvas_course_id`.** Same problem from the other side. Pick one. The validator and the sync command both refuse this configuration.
+
+- **Wrong canvas_course_id.** If the integer in course-config.yaml is wrong or points at a course you do not teach on, the toolkit fails at step 4 with a 401/403/404 from `GET /courses/:id` rather than wasting API calls pushing into nothing. Open the course on web; the URL ends in `/courses/NNNN`; that integer goes in the YAML.
 
 - **Content references that break.** If lesson markdown references local images or MicroSim files, those paths will not resolve once the page is on Canvas. Either upload to Canvas Files first and reference the returned URL, or host externally. Phase 11 does not auto-upload media; that is a future enhancement.
 
@@ -338,3 +398,14 @@ The shim template is what repo-bootstrap copies into a new course's scripts/sync
   the default 200/50/3 setup, exceeding the static-web target's
   10 percent cap. Strict overlap requires the static-web target or
   manual per-attempt quizzes drawing from pre-partitioned bank slices.
+
+### 1.2 (2026-05-05, Phase 15)
+- Update-existing-course mode added. Set `canvas_course_id` in
+  course-config.yaml (instead of `canvas_account_id`) and the
+  toolkit pushes content into that course directly. Required for
+  teachers without account-level admin rights.
+- The two modes are mutually exclusive and the chosen mode is
+  recorded in sync-state.json. Mode flips between syncs are
+  refused until the user deletes sync-state.json.
+- New `get_course(course_id)` helper on CanvasClient verifies
+  access at the start of an update-mode sync, before any pushes.

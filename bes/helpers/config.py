@@ -69,13 +69,30 @@ def load_config(course_root: Path = None) -> dict:
     # Platform-specific required fields and defaults.
     platform = course.get("platform")
     if platform == "canvas":
-        if not course.get("canvas_account_id"):
+        has_account = course.get("canvas_account_id") is not None
+        has_course = course.get("canvas_course_id") is not None
+        if has_account and has_course:
             raise ConfigError(
-                "course-config.yaml: platform 'canvas' requires a "
-                "'canvas_account_id' field under the 'course:' block. "
-                "On hosted Canvas the root account is usually 1; on an "
-                "institutional instance, ask your Canvas admin for the "
-                "sub-account ID you have rights to use."
+                "course-config.yaml: platform 'canvas' has BOTH "
+                "'canvas_account_id' and 'canvas_course_id' set. "
+                "Pick one: canvas_account_id (create-new mode, requires "
+                "admin rights to the account) OR canvas_course_id "
+                "(update-existing mode, requires teacher rights on the "
+                "specific course). Remove the field that does not apply."
+            )
+        if not has_account and not has_course:
+            raise ConfigError(
+                "course-config.yaml: platform 'canvas' requires either "
+                "'canvas_account_id' OR 'canvas_course_id' under the "
+                "'course:' block.\n"
+                "  - canvas_account_id (integer): create-new mode. "
+                "The toolkit creates a fresh course under the given "
+                "account. Requires admin rights to that account.\n"
+                "  - canvas_course_id (integer): update-existing mode. "
+                "The toolkit pushes content into an existing Canvas "
+                "course you already have teacher rights on. Find the "
+                "ID in the URL when viewing the course on web: "
+                "https://your-canvas.instructure.com/courses/NNNN."
             )
 
     if platform == "pdf":

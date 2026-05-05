@@ -25,6 +25,7 @@ from .commands import build_course as build_course_cmd
 from .commands import add_diagrams as add_diagrams_cmd
 from .commands import add_microsim as add_microsim_cmd
 from .commands import preview as preview_cmd
+from .commands import export_pdf as export_pdf_cmd
 
 console = Console()
 
@@ -197,6 +198,16 @@ def add_diagrams(unit_number: int, max_diagrams_per_lesson: int,
 def preview(open_after: bool):
     """Render the course-level preview HTML (every unit plus the course final)."""
     sys.exit(preview_cmd.run_course(open_after=open_after))
+
+
+@main.command(name="export-pdf")
+@click.option("--dry-run", is_flag=True,
+              help="Write the intermediate HTML only; skip the PDF render.")
+@click.option("--output-dir", default=None,
+              help="Where to write the PDF (default: ./build/pdf).")
+def export_pdf(dry_run: bool, output_dir: str):
+    """Generate a PDF of the course regardless of its primary platform."""
+    sys.exit(export_pdf_cmd.run(dry_run=dry_run, output_dir=output_dir))
 
 
 @main.command(name="preview-final")

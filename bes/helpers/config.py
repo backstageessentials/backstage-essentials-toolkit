@@ -66,7 +66,7 @@ def load_config(course_root: Path = None) -> dict:
             f"course-config.yaml is missing required fields: {', '.join(missing)}"
         )
 
-    # Platform-specific required fields.
+    # Platform-specific required fields and defaults.
     platform = course.get("platform")
     if platform == "canvas":
         if not course.get("canvas_account_id"):
@@ -76,6 +76,29 @@ def load_config(course_root: Path = None) -> dict:
                 "On hosted Canvas the root account is usually 1; on an "
                 "institutional instance, ask your Canvas admin for the "
                 "sub-account ID you have rights to use."
+            )
+
+    if platform == "pdf":
+        # PDF-specific fields with defaults. None of these are required;
+        # they exist so the renderer always sees a value.
+        course.setdefault("pdf_page_size", "letter")
+        course.setdefault("pdf_microsim_strategy", "qr")
+        course.setdefault("pdf_include_final", False)
+        # pdf_microsim_base_url stays None if missing; the renderer emits
+        # a placeholder for each MicroSim until it is set.
+        valid_sizes = {"letter", "a4"}
+        size = str(course.get("pdf_page_size") or "").lower()
+        if size and size not in valid_sizes:
+            raise ConfigError(
+                f"course-config.yaml: pdf_page_size must be 'letter' or 'a4', "
+                f"got '{course.get('pdf_page_size')}'"
+            )
+        valid_strategies = {"qr", "screenshot"}
+        strat = str(course.get("pdf_microsim_strategy") or "").lower()
+        if strat and strat not in valid_strategies:
+            raise ConfigError(
+                f"course-config.yaml: pdf_microsim_strategy must be 'qr' or "
+                f"'screenshot', got '{course.get('pdf_microsim_strategy')}'"
             )
 
     course["_root"] = str(course_root)

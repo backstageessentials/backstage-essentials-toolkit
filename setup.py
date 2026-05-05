@@ -25,6 +25,10 @@ setup(
         "requests>=2.31",
         "markdown-it-py>=3.0",
         "python-dotenv>=1.0",
+        # Phase 12 PDF sync. WeasyPrint imports at runtime; if its system
+        # libs (Pango/Cairo) are missing, the skill falls back to Chrome.
+        "weasyprint>=60",
+        "qrcode[pil]>=7.4",
     ],
     entry_points={
         "console_scripts": [

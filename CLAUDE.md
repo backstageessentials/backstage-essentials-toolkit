@@ -21,6 +21,7 @@ Run any of these from inside a course folder. The toolkit is invoked through the
 | `bes add-microsim` | Add an interactive HTML widget to a lesson via the microsim-builder skill. |
 | `bes build-final` | Generate the course final assessment question bank via the final-assessment-builder skill. |
 | `bes build-course` | Build an entire course end to end (lessons, quizzes, final). |
+| `bes export-pdf` | Generate a PDF version of the course via the pdf-sync skill. Works regardless of the course's primary platform. |
 | `bes validate` | Lint the course repo for missing fields, broken refs, and draft flags. |
 | `bes commit` | Stage changes and commit with a generated or supplied message. |
 | `bes push` | Push commits to the GitHub remote. |

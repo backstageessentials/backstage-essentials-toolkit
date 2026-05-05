@@ -31,9 +31,9 @@ class PlatformError(Exception):
 SUPPORTED_PLATFORMS = {
     "thinkific": "implemented",
     "canvas": "implemented",
+    "pdf": "implemented",
     "google-classroom": "deferred",
     "static-web": "deferred",
-    "pdf": "deferred",
 }
 
 
@@ -64,4 +64,21 @@ def get_sync_function(platform: str):
         from sync.canvas.lib import sync
         return sync
 
+    if platform == "pdf":
+        from sync.pdf.lib import sync
+        return sync
+
     raise PlatformError(f"Internal error: no sync function for '{platform}'.")
+
+
+def get_export_pdf_function():
+    """Return the export_pdf() function from sync/pdf/.
+
+    Used by `bes export-pdf` to produce a PDF regardless of the course's
+    primary platform. Imports the same module the pdf platform sync uses,
+    so the renderer code is shared between bes sync (when platform: pdf)
+    and bes export-pdf (always available).
+    """
+    _ensure_toolkit_on_path()
+    from sync.pdf.lib import export_pdf
+    return export_pdf

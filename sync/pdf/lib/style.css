@@ -1,0 +1,394 @@
+/* Backstage Essentials PDF stylesheet.
+ *
+ * Targets WeasyPrint (CSS Paged Media + a few WeasyPrint extensions). The
+ * Chrome-headless fallback also picks this up via the same @page rules.
+ *
+ * Brand palette mirrors static-web previews so cross-format learners see a
+ * consistent look:
+ *   --brand   #D6006C (pink)
+ *   --text    #0A0A0A (near-black)
+ *   --muted   rgba(10,10,10,0.65)
+ *   --rule    #eaeaea
+ */
+
+@page {
+  size: __PAGE_SIZE__ portrait;
+  margin: 0.75in 0.7in 0.9in 0.7in;
+
+  @bottom-left {
+    content: "__COURSE_TITLE__";
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 8pt;
+    color: rgba(10, 10, 10, 0.65);
+  }
+  @bottom-center {
+    content: "© __COPYRIGHT_YEAR__ __COPYRIGHT_HOLDER__";
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 8pt;
+    color: rgba(10, 10, 10, 0.65);
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 8pt;
+    color: rgba(10, 10, 10, 0.65);
+  }
+}
+
+@page :first {
+  /* Cover page: no footer chrome. */
+  @bottom-left  { content: ""; }
+  @bottom-center { content: ""; }
+  @bottom-right  { content: ""; }
+}
+
+html, body { margin: 0; padding: 0; background: #FFFFFF; color: #0A0A0A; }
+
+body {
+  font-family: Helvetica, Arial, "Liberation Sans", sans-serif;
+  font-size: 11pt;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.2;
+  color: #0A0A0A;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+h1 {
+  font-size: 22pt;
+  color: #D6006C;
+  border-bottom: 1pt solid #D6006C;
+  padding-bottom: 0.2em;
+  margin: 1em 0 0.6em 0;
+}
+h2 {
+  font-size: 16pt;
+  color: #D6006C;
+  margin: 1.4em 0 0.5em 0;
+}
+h3 {
+  font-size: 13pt;
+  margin: 1.2em 0 0.4em 0;
+}
+h4, h5, h6 {
+  font-size: 11.5pt;
+  margin: 1em 0 0.3em 0;
+}
+
+p { margin: 0.5em 0; }
+ul, ol { margin: 0.4em 0 0.6em 0; padding-left: 1.2em; }
+li { margin: 0.2em 0; }
+
+a { color: #D6006C; text-decoration: none; }
+code {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.92em;
+  background: rgba(214, 0, 108, 0.07);
+  padding: 0 0.25em;
+  border-radius: 2px;
+}
+pre {
+  background: #f6f6f6;
+  border-radius: 4px;
+  padding: 8pt 10pt;
+  font-size: 9pt;
+  line-height: 1.4;
+  overflow: hidden;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+pre code { background: transparent; padding: 0; font-size: inherit; }
+blockquote {
+  border-left: 2pt solid #D6006C;
+  padding: 0.1em 0.8em;
+  margin: 0.6em 0;
+  color: rgba(10, 10, 10, 0.7);
+}
+
+/* ----- Cover page ----- */
+
+.cover {
+  page: cover;
+  page-break-after: always;
+  break-after: page;
+  display: block;
+  text-align: center;
+  padding-top: 1.2in;
+}
+.cover .cover-eyebrow {
+  font-size: 11pt;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #D6006C;
+  margin: 0 0 0.6em 0;
+}
+.cover h1.cover-title {
+  font-size: 30pt;
+  border-bottom: none;
+  padding-bottom: 0;
+  margin: 0 0 0.3em 0;
+  line-height: 1.15;
+  color: #0A0A0A;
+}
+.cover .cover-subtitle {
+  font-size: 14pt;
+  color: rgba(10, 10, 10, 0.7);
+  margin: 0 0 1.6em 0;
+  font-style: italic;
+}
+.cover .cover-metadata {
+  display: block;
+  margin-top: 1.2in;
+  font-size: 11pt;
+  color: rgba(10, 10, 10, 0.7);
+  line-height: 1.7;
+}
+.cover .cover-metadata strong {
+  color: #0A0A0A;
+}
+.cover .cover-rule {
+  width: 1.6in;
+  border: none;
+  border-top: 2pt solid #D6006C;
+  margin: 1.4em auto;
+}
+
+/* ----- Table of contents ----- */
+
+.toc {
+  page: toc;
+  page-break-after: always;
+  break-after: page;
+}
+.toc h1 {
+  margin-top: 0;
+}
+.toc ul {
+  list-style: none;
+  padding-left: 0;
+}
+.toc li {
+  margin: 0.3em 0;
+  padding: 0;
+}
+.toc .toc-unit {
+  font-weight: 700;
+  margin-top: 0.6em;
+  border-top: 1pt dotted rgba(10, 10, 10, 0.15);
+  padding-top: 0.4em;
+}
+.toc .toc-lesson {
+  padding-left: 1.2em;
+  font-weight: 400;
+  color: rgba(10, 10, 10, 0.85);
+}
+.toc .toc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.4em;
+}
+.toc .toc-leader {
+  flex: 1;
+  border-bottom: 1pt dotted rgba(10, 10, 10, 0.25);
+  margin: 0 0.4em;
+  position: relative;
+  top: -0.25em;
+}
+.toc .toc-page {
+  font-variant-numeric: tabular-nums;
+  color: rgba(10, 10, 10, 0.7);
+}
+/* Resolve the page number for the linked target via WeasyPrint's
+ * target-counter() function. */
+.toc a.toc-link::after {
+  content: target-counter(attr(href), page);
+}
+
+/* ----- Course description ----- */
+
+.course-description {
+  page-break-before: always;
+  break-before: page;
+}
+
+/* ----- Units and lessons ----- */
+
+.unit {
+  page-break-before: always;
+  break-before: page;
+}
+.unit-header {
+  margin-bottom: 1.2em;
+}
+.unit-header .unit-eyebrow {
+  font-size: 10pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #D6006C;
+  margin: 0;
+}
+.unit-header h1 {
+  border-bottom: 2pt solid #D6006C;
+  margin-top: 0.1em;
+}
+.unit-outcomes {
+  background: rgba(214, 0, 108, 0.04);
+  border-left: 2pt solid #D6006C;
+  padding: 0.4em 0.9em;
+  margin: 0.8em 0 1.4em 0;
+  font-size: 10pt;
+}
+.unit-outcomes h3 {
+  margin: 0 0 0.3em 0;
+  font-size: 11pt;
+  color: #D6006C;
+}
+.lesson {
+  margin: 1.2em 0;
+  page-break-inside: auto;
+  break-inside: auto;
+}
+.lesson + .lesson {
+  border-top: 1pt solid #eaeaea;
+  padding-top: 1.2em;
+}
+.lesson-meta {
+  font-size: 9pt;
+  color: rgba(10, 10, 10, 0.55);
+  margin: -0.3em 0 0.6em 0;
+}
+
+/* ----- Diagrams (rendered SVGs) ----- */
+
+.diagram {
+  margin: 0.8em auto;
+  text-align: center;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+.diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+.diagram-fallback {
+  border: 1pt dashed rgba(214, 0, 108, 0.4);
+  background: rgba(214, 0, 108, 0.03);
+  border-radius: 4px;
+  padding: 8pt 10pt;
+  text-align: left;
+}
+.diagram-fallback-note {
+  font-size: 9pt;
+  color: rgba(10, 10, 10, 0.65);
+  margin: 0 0 0.4em 0;
+}
+.diagram-source {
+  font-size: 8.5pt;
+  background: #FFFFFF;
+}
+
+/* ----- MicroSims (QR or screenshot) ----- */
+
+.microsim {
+  page-break-inside: avoid;
+  break-inside: avoid;
+  margin: 1em 0;
+  padding: 0.6em 0.9em;
+  border: 1pt solid #eaeaea;
+  border-radius: 4px;
+  background: #ffffff;
+  display: flex;
+  gap: 1em;
+  align-items: center;
+}
+.microsim img {
+  flex: 0 0 auto;
+  width: 1.4in;
+  height: auto;
+}
+.microsim figcaption {
+  font-size: 10pt;
+  color: rgba(10, 10, 10, 0.85);
+  flex: 1 1 auto;
+}
+.microsim-screenshot img {
+  width: 2.2in;
+  border: 1pt solid #eaeaea;
+}
+.microsim-todo {
+  display: block;
+  border: 1pt dashed #D6006C;
+  background: rgba(214, 0, 108, 0.04);
+  font-size: 10pt;
+}
+.microsim-todo p { margin: 0.2em 0; }
+.microsim-filename {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 9pt;
+  color: rgba(10, 10, 10, 0.6);
+}
+
+/* ----- Knowledge checks (study format) ----- */
+
+.kc-section {
+  page-break-before: auto;
+  break-before: auto;
+  margin-top: 1.4em;
+}
+.kc-section h2 {
+  margin-top: 1em;
+}
+.kc-list {
+  list-style: none;
+  padding-left: 0;
+  counter-reset: kc;
+}
+.kc-list > li {
+  counter-increment: kc;
+  margin: 0.6em 0 0.9em 0;
+  padding: 0.4em 0 0 0;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+.kc-list > li::before {
+  content: counter(kc) ". ";
+  font-weight: 700;
+  color: #D6006C;
+}
+.kc-question {
+  font-weight: 600;
+  margin: 0.2em 0 0.4em 0;
+  display: inline;
+}
+.kc-choices {
+  list-style: lower-alpha;
+  padding-left: 1.6em;
+  margin: 0.2em 0 0.4em 0;
+}
+.kc-answer {
+  font-size: 10pt;
+  background: rgba(214, 0, 108, 0.04);
+  border-left: 2pt solid #D6006C;
+  padding: 0.3em 0.8em;
+  margin: 0.3em 0 0 0;
+  border-radius: 0 4px 4px 0;
+}
+.kc-answer .kc-answer-label {
+  color: #D6006C;
+  font-weight: 700;
+}
+
+/* Course final included (rare). When it is, render the question text but
+ * not the answers — the final is meant to be taken in a controlled
+ * environment. */
+.final-section .kc-answer { display: none; }
+
+/* ----- Generic helpers ----- */
+.page-break { page-break-before: always; break-before: page; }
+.no-break { page-break-inside: avoid; break-inside: avoid; }
+img { max-width: 100%; height: auto; }

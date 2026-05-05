@@ -3,7 +3,25 @@
 Reads the platform field from course-config.yaml and dispatches to the
 correct sync implementation. thinkific (Phase 2) and canvas (Phase 11) are
 wired up; the others raise PlatformError until their phase ships.
+
+The sync skill packages live as siblings of the bes package at the toolkit
+root (e.g., `<toolkit-root>/sync/canvas/lib/sync.py`). The editable install
+only registers `bes` as a top-level package, so we add the toolkit root to
+sys.path on demand before importing a sync skill.
 """
+
+import sys
+from pathlib import Path
+
+
+_TOOLKIT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
+def _ensure_toolkit_on_path() -> None:
+    """Make `sync.<platform>.lib` importable regardless of cwd."""
+    root = str(_TOOLKIT_ROOT)
+    if root not in sys.path:
+        sys.path.insert(0, root)
 
 
 class PlatformError(Exception):
@@ -35,6 +53,8 @@ def get_sync_function(platform: str):
             f"Platform '{platform}' is not yet implemented. "
             f"For now, 'thinkific' and 'canvas' are the supported sync targets."
         )
+
+    _ensure_toolkit_on_path()
 
     if platform == "thinkific":
         from sync.thinkific.lib import sync

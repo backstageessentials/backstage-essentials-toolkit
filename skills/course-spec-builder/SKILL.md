@@ -105,7 +105,7 @@ Inputs:
 - target_platform: static-web
 - output_format: docx only
 
-Outputs: a Word doc build spec where Section 9 explains MkDocs configuration and theme choice, Section 10 ends with `mkdocs build && mkdocs gh-deploy` for the daily deploy command, and Section 14 lists GitHub Pages enabled on the repo and a domain configured if applicable.
+Outputs: a Word doc build spec where Section 9 explains the toolkit's bespoke multi-page renderer (index.html landing with hero and unit-card grid, per-unit pages with sticky sidebar and lesson cards, final.html in test mode, per-unit microsims/ folders), Section 10 ends with `bes preview` for local rendering and a manual copy of `preview/` to the chosen static host, and Section 14 lists chosen host (GitHub Pages, Netlify, Cloudflare Pages, S3, or school server), optional `cover_image_url` / `logo_url` / `brand_secondary_color` in `course-config.yaml`, DNS for any custom domain, and a modern browser for previewing.
 
 ## Quality Checks
 
@@ -140,7 +140,12 @@ Before declaring the skill complete, verify:
 - `templates/overlay-static-web.md` (MkDocs/static site sections)
 - `templates/overlay-pdf.md` (PDF generation sections)
 
-The overlay files for non-thinkific platforms are stubs in Phase 2. They get filled in during Phase 4 when those sync skills get built. For Phase 2, only the thinkific overlay is fully populated.
+Overlay status:
+- `overlay-thinkific.md` — populated (Phase 2)
+- `overlay-canvas.md` — populated (Phase 11)
+- `overlay-pdf.md` — populated (Phase 12)
+- `overlay-static-web.md` — populated (Phase 18)
+- `overlay-google-classroom.md` — stub, fills in when the Google Classroom sync skill ships
 
 ## Changelog
 
@@ -168,3 +173,14 @@ The overlay files for non-thinkific platforms are stubs in Phase 2. They get fil
   primary, Chrome fallback), Mermaid pre-render via mermaid-cli, the
   QR-vs-screenshot MicroSim strategies, and the pdf_* course-config
   fields.
+
+### 1.5 (2026-05-05)
+- Phase 18: static-web overlay rewritten. The Phase 4 MkDocs stub is
+  gone. The overlay now describes the toolkit's bespoke multi-page
+  renderer (hero, unit-card grid, lesson cards, sticky sidebar with
+  localStorage progress, branded footer, subtle animations with
+  prefers-reduced-motion respected) and documents the optional
+  cover_image_url / logo_url / brand_secondary_color / author_credit /
+  license_text course-config fields. Sync command is `bes preview` plus
+  a manual copy of `preview/` to the chosen static host; `bes sync`
+  static-web routing is still deferred.

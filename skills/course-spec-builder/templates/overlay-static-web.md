@@ -74,6 +74,7 @@ Runs the same lint pass every other platform uses (missing fields, broken refs, 
 
 - Decided which static host you will publish to: GitHub Pages, Netlify, Cloudflare Pages, S3, school web server, or just sharing `preview/index.html` locally.
 - If using a custom domain: DNS configured to point at the hosting provider, and HTTPS enabled at the host (most modern hosts do this automatically).
+- Optional `tagline` set in `course-config.yaml`. One short sentence shown as the hero subtitle on the landing page. Skip this field to let the renderer auto-extract the first sentence of `course-description.md`.
 - Optional `cover_image_url` chosen and added to `course-config.yaml`. Path is relative to `preview/index.html` after the bundle is copied to the host (a `./assets/cover.jpg` entry expects `preview/assets/cover.jpg` to exist). Skip this field to render the default magenta gradient hero.
 - Optional `logo_url` chosen and added to `course-config.yaml`. Same path rules. Skip this field to render the footer without a logo.
 - Optional `brand_secondary_color` chosen and added to `course-config.yaml`. CSS color string, hex preferred. Used as a complementary accent on alternating unit cards. Defaults to a lighter shade of the brand magenta.

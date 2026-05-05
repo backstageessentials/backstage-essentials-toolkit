@@ -253,6 +253,41 @@ def _load_unit(unit_folder: Path) -> Unit:
     )
 
 
+_TAGLINE_MAX_CHARS = 200
+
+
+def _tagline_from_description(course_root: Path) -> str:
+    """Extract a hero-friendly tagline from course-description.md.
+
+    Pulls the first non-heading paragraph, then narrows to its first
+    sentence so a long Pitch paragraph does not blow up the hero.
+    Falls back to a 200-char truncation with ellipsis if no sentence
+    boundary is found in range.
+    """
+    desc_path = course_root / "course-description.md"
+    if not desc_path.exists():
+        return ""
+    paragraph = ""
+    for chunk in desc_path.read_text(encoding="utf-8").split("\n\n"):
+        stripped = chunk.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        paragraph = stripped.replace("\n", " ")
+        break
+    if not paragraph:
+        return ""
+    # Prefer the first sentence. Match ". ", "! ", "? " followed by a
+    # capital-leading word, or end-of-string punctuation.
+    match = re.search(r"([\.!?])(\s+)(?=[A-Z0-9])", paragraph)
+    if match:
+        first_sentence = paragraph[: match.end(1)].strip()
+        if len(first_sentence) <= _TAGLINE_MAX_CHARS:
+            return first_sentence
+    if len(paragraph) <= _TAGLINE_MAX_CHARS:
+        return paragraph
+    return paragraph[: _TAGLINE_MAX_CHARS - 1].rstrip() + "…"
+
+
 def _load_course_meta(course_root: Path) -> CourseMeta:
     config = (yaml.safe_load((course_root / "course-config.yaml").read_text(encoding="utf-8")) or {})
     course = config.get("course", {})
@@ -266,16 +301,9 @@ def _load_course_meta(course_root: Path) -> CourseMeta:
     license_text = course.get("license_text") or ""
     author_credit = course.get("author_credit") or "Backstage Essentials LLC"
 
-    tagline = ""
-    desc_path = course_root / "course-description.md"
-    if desc_path.exists():
-        text = desc_path.read_text(encoding="utf-8")
-        for paragraph in text.split("\n\n"):
-            stripped = paragraph.strip()
-            if not stripped or stripped.startswith("#"):
-                continue
-            tagline = stripped.replace("\n", " ")
-            break
+    tagline = (course.get("tagline") or "").strip()
+    if not tagline:
+        tagline = _tagline_from_description(course_root)
     return CourseMeta(course_name=name, tagline=tagline, course_slug=slug,
                       knowledge_check_mode=kc_mode,
                       cover_image_url=cover_image_url,

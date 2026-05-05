@@ -83,7 +83,13 @@ def load_config(course_root: Path = None) -> dict:
     # Phase 18 visual polish fields. All optional. The static-web target
     # uses graceful defaults for courses that do not set them: a
     # gradient-only hero (no cover photo), no footer logo, the toolkit's
-    # brand magenta as the only accent.
+    # brand magenta as the only accent. tagline overrides the
+    # auto-extracted first sentence of course-description.md.
+    tagline = course.get("tagline")
+    if tagline is not None and not isinstance(tagline, str):
+        raise ConfigError(
+            "course-config.yaml: tagline must be a string."
+        )
     cover_url = course.get("cover_image_url")
     if cover_url is not None and not isinstance(cover_url, str):
         raise ConfigError(

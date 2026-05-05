@@ -29,6 +29,12 @@ course:
   # render with the toolkit's default magenta gradient hero, no logo,
   # and the brand magenta as the only accent.
   #
+  # tagline: "One short sentence that sells the course."
+  #   Hero subtitle on the landing page. Keep it under ~200 characters.
+  #   When omitted, the renderer extracts the first sentence of
+  #   course-description.md, which works fine for crisp Pitch sections
+  #   but produces a wall of text if the first paragraph runs long.
+  #
   # cover_image_url: "https://example.com/hero.jpg"
   #   URL or path to a hero cover image. Layered under the magenta
   #   gradient overlay so white headline text stays legible. Recommended

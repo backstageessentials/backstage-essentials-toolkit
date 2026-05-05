@@ -143,9 +143,15 @@ Empty questions list. The quiz-builder skill populates these later.
 final_assessment:
   name: "{COURSE_NAME} Course Final"
   total_questions_in_bank: 200
-  questions_per_attempt: 100
+  questions_per_attempt: 50
   pass_threshold: 0.75
   randomize: true
+  max_attempts: 3
+  max_overlap_percentage: 0.10
+  retest_lockout_message: |
+    You have used all available attempts. Please contact your
+    instructor if you need additional review.
+  attempts_persist_across_sessions: true
   questions: []
 ```
 

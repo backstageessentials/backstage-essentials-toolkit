@@ -61,7 +61,7 @@ Each skill in `skills/` is a self contained capability with its own `SKILL.md`. 
 | `skills/repo-bootstrap/` | Scaffold the course repo folder structure (course-config.yaml, content/, exam/, scripts/, etc.). |
 | `skills/lesson-drafter/` | Draft one lesson markdown file in the course's voice. Reads voice-guide.md, course-description.md, and the unit's other lessons. |
 | `skills/quiz-builder/` | Generate unit knowledge check questions in scenario, recall, applied calculation, or mixed style. |
-| `skills/final-assessment-builder/` | Generate the course final assessment question bank (typically 200 questions, 100 sampled per attempt). |
+| `skills/final-assessment-builder/` | Generate the course final assessment question bank (typically 200 questions, 50 sampled per attempt across 3 retest attempts). |
 | `skills/diagram-builder/` | Add Mermaid diagrams to existing lessons where they earn their place. Lints syntax before writing. |
 | `skills/microsim-builder/` | Add interactive HTML widgets (MicroSims) to a lesson by customizing one of seven starter templates. |
 | `skills/course-validator/` | Deep validation of the course repo (voice checks, coverage, draft flag review) beyond what bes validate catches. |

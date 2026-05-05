@@ -4,7 +4,11 @@ version: 1.0
 description: Generate the comprehensive course final assessment question bank
 inputs:
   - total_questions: integer, default 200
-  - questions_per_attempt: integer, default 100
+  - questions_per_attempt: integer, default 50
+  - max_attempts: integer, default 3 (1 initial plus 2 retests)
+  - max_overlap_percentage: float in [0, 1], default 0.10
+  - retest_lockout_message: string, optional
+  - attempts_persist_across_sessions: bool, default true
   - distribution: enum (proportional, equal, custom), default proportional
   - custom_distribution: dict, optional (only used when distribution is custom)
   - difficulty_mix: string, default "30 percent easy, 50 percent medium, 20 percent hard"
@@ -24,7 +28,9 @@ audience_neutral: true
 
 # Final Assessment Builder
 
-Generates the comprehensive end-of-course final assessment. Produces a question bank (default 200 questions) that randomly samples a subset (default 100) on each attempt. The student passes the course by passing the final.
+Generates the comprehensive end-of-course final assessment. Produces a question bank (default 200 questions) that randomly samples a subset (default 50) on each attempt. The student passes the course by passing the final.
+
+Phase 14 added retest behavior: the final permits up to `max_attempts` (default 3) tries, with each retest constrained to overlap at most `max_overlap_percentage` (default 10 percent) of its questions with prior attempts. See Section "Retest Fields" below.
 
 ## When to Use
 
@@ -73,7 +79,7 @@ It is fine to run this skill more than once. Each run regenerates the question b
 
 8. Write the output to `exam/course-final.yaml`:
    - Replace existing questions
-   - Preserve `name`, `total_questions_in_bank`, `questions_per_attempt`, `pass_threshold`, `randomize` fields if present
+   - Preserve `name`, `total_questions_in_bank`, `questions_per_attempt`, `pass_threshold`, `randomize`, `max_attempts`, `max_overlap_percentage`, `retest_lockout_message`, `attempts_persist_across_sessions` fields if present
    - Update `total_questions_in_bank` to match what was generated
    - Add `draft: true` flag at the top level
 
@@ -91,10 +97,16 @@ It is fine to run this skill more than once. Each run regenerates the question b
 final_assessment:
   name: "{COURSE_NAME} Course Final"
   total_questions_in_bank: 200
-  questions_per_attempt: 100
+  questions_per_attempt: 50
   pass_threshold: 0.75
   randomize: true
   draft: true
+  max_attempts: 3
+  max_overlap_percentage: 0.10
+  retest_lockout_message: |
+    You have used all available attempts. Please contact your
+    instructor if you need additional review.
+  attempts_persist_across_sessions: true
   questions:
     - id: u1-q01
       unit: 1
@@ -177,6 +189,17 @@ Before writing the file:
 - No question text appears identical or near-identical in two questions
 - No question references content that does not exist in the lessons
 - The bank is large enough that questions_per_attempt random sampling produces meaningful variety. If total_questions is less than 1.5 times questions_per_attempt, warn the user.
+
+## Retest Fields
+
+Phase 14 adds four optional fields that control retest behavior. Defaults are applied when fields are absent, so older course-final.yaml files keep working.
+
+- `max_attempts` (default 3): how many times a student can take the final. 1 means no retests.
+- `max_overlap_percentage` (default 0.10): cap on the share of questions that can repeat between any two attempts. Range 0 to 1. The static-web target enforces this cap exactly during sampling. Thinkific and Canvas approximate it through random sampling at attempt time and do not enforce it strictly. See those skills' SKILL.md files.
+- `retest_lockout_message` (string): shown on the static-web page after `max_attempts` is hit. Defaults to a generic instructor-contact message.
+- `attempts_persist_across_sessions` (default true): the static-web target writes attempts to localStorage so a browser refresh or new tab does not reset the count.
+
+Mathematical feasibility: with bank size B, per-attempt N, max attempts A, overlap cap p, the worst case unique questions used is `A*N - (A-1)*floor(p*N)`. If that exceeds B, the constraint cannot be satisfied for all attempts. `bes validate` errors when p=0 and B is short, warns otherwise. For the default mix (200 bank, 50 per attempt, 3 attempts, 10 percent overlap), worst case is 150 - 10 = 140 questions, comfortably under 200. Zero-overlap retests are also feasible because 3*50 = 150 ≤ 200.
 
 ## Common Mistakes
 

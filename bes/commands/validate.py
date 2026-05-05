@@ -126,6 +126,7 @@ def run(strict: bool = False) -> int:
         warn("exam/course-final.yaml is missing. The final assessment will not exist.")
     else:
         _validate_quiz(final_path, "course-final", all_question_ids, err, warn)
+        _validate_final_assessment(final_path, err, warn)
 
     _print_issues(issues, strict)
     return _exit_code(issues, strict)
@@ -204,6 +205,110 @@ def _validate_quiz(quiz_path: Path, label: str,
 
         if not q.get("explanation"):
             warn(f"{loc} ({q_id}): no explanation.")
+
+
+def _validate_final_assessment(quiz_path: Path, err, warn):
+    """Phase 14 retest-logic checks for exam/course-final.yaml.
+
+    Validates max_attempts, max_overlap_percentage, and the relationship
+    between bank size, per-attempt count, and the overlap cap.
+    """
+    try:
+        with quiz_path.open() as f:
+            data = yaml.safe_load(f) or {}
+    except yaml.YAMLError:
+        return
+
+    final = data.get("final_assessment") or {}
+    if not isinstance(final, dict):
+        return
+
+    questions = final.get("questions") or []
+    bank_size = len(questions)
+
+    # questions_per_attempt: must be a positive int <= bank
+    per_attempt = final.get("questions_per_attempt")
+    if per_attempt is not None:
+        try:
+            per_attempt_int = int(per_attempt)
+        except (TypeError, ValueError):
+            err(f"course-final.yaml: questions_per_attempt must be an integer, got {per_attempt!r}.")
+            return
+        if per_attempt_int <= 0:
+            err("course-final.yaml: questions_per_attempt must be at least 1.")
+            return
+        if bank_size and per_attempt_int > bank_size:
+            warn(
+                f"course-final.yaml: questions_per_attempt ({per_attempt_int}) "
+                f"is larger than the bank ({bank_size} questions)."
+            )
+    else:
+        per_attempt_int = bank_size
+
+    # max_attempts: optional, default 3, must be >= 1
+    max_attempts = final.get("max_attempts", 3)
+    try:
+        max_attempts_int = int(max_attempts)
+    except (TypeError, ValueError):
+        err(f"course-final.yaml: max_attempts must be an integer, got {max_attempts!r}.")
+        return
+    if max_attempts_int < 1:
+        err("course-final.yaml: max_attempts must be 1 or higher.")
+        return
+
+    # max_overlap_percentage: optional, default 0.10, must be in [0, 1]
+    overlap_raw = final.get("max_overlap_percentage", 0.10)
+    try:
+        overlap = float(overlap_raw)
+    except (TypeError, ValueError):
+        err(
+            f"course-final.yaml: max_overlap_percentage must be a number "
+            f"between 0 and 1, got {overlap_raw!r}."
+        )
+        return
+    if overlap < 0 or overlap > 1:
+        err(
+            f"course-final.yaml: max_overlap_percentage must be between 0 "
+            f"and 1, got {overlap}."
+        )
+        return
+
+    # Mathematical feasibility check.
+    # Best-case unique questions used across A attempts when each retest
+    # uses the full overlap cap with prior attempts:
+    #   unique_used = A*N - (A-1)*floor(overlap*N)
+    # If that exceeds the bank, the constraint cannot be satisfied for
+    # all A attempts.
+    if bank_size and per_attempt_int and max_attempts_int >= 2:
+        per_attempt_overlap_cap = int(overlap * per_attempt_int)
+        unique_required = (
+            max_attempts_int * per_attempt_int
+            - (max_attempts_int - 1) * per_attempt_overlap_cap
+        )
+        if overlap == 0 and unique_required > bank_size:
+            err(
+                f"course-final.yaml: cannot enforce 0 percent overlap with "
+                f"current bank size; need at least {unique_required} questions "
+                f"in bank ({max_attempts_int} attempts x "
+                f"{per_attempt_int} per attempt), have {bank_size}."
+            )
+        elif unique_required > bank_size:
+            warn(
+                f"course-final.yaml: bank size {bank_size} cannot satisfy "
+                f"max_overlap_percentage={overlap} across {max_attempts_int} "
+                f"attempts of {per_attempt_int} questions; "
+                f"would need {unique_required} unique questions in the worst case."
+            )
+
+    # retest_lockout_message: optional, must be string if set
+    msg = final.get("retest_lockout_message")
+    if msg is not None and not isinstance(msg, str):
+        warn("course-final.yaml: retest_lockout_message should be a string.")
+
+    # attempts_persist_across_sessions: optional, must be bool if set
+    persist = final.get("attempts_persist_across_sessions")
+    if persist is not None and not isinstance(persist, bool):
+        warn("course-final.yaml: attempts_persist_across_sessions should be true or false.")
 
 
 def _print_issues(issues: list, strict: bool):

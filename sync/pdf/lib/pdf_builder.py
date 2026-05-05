@@ -30,6 +30,7 @@ import logging
 import os
 import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Optional
@@ -46,11 +47,30 @@ class PDFBuildError(Exception):
     """Raised when neither WeasyPrint nor Chrome headless can render the PDF."""
 
 
+def _ensure_macos_dylib_path() -> None:
+    # Homebrew installs Pango/Cairo/etc. under /opt/homebrew/lib (Apple Silicon)
+    # or /usr/local/lib (Intel). macOS's dynamic linker does not search these by
+    # default, so WeasyPrint's cffi dlopen calls fail with "no such file" even
+    # when the libs are present. Prepend Homebrew's lib dir so the import works
+    # without users having to set DYLD_FALLBACK_LIBRARY_PATH themselves.
+    if sys.platform != "darwin":
+        return
+    candidates = ["/opt/homebrew/lib", "/usr/local/lib"]
+    existing = os.environ.get("DYLD_FALLBACK_LIBRARY_PATH", "")
+    parts = [p for p in existing.split(":") if p]
+    for candidate in candidates:
+        if Path(candidate, "libgobject-2.0.dylib").exists() and candidate not in parts:
+            parts.insert(0, candidate)
+    if parts:
+        os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = ":".join(parts)
+
+
 def _try_weasyprint(html_str: str, base_url: Path, output_path: Path) -> str:
     """Render with WeasyPrint. Returns 'weasyprint' on success, None on import failure.
 
     Raises any other exception from WeasyPrint (e.g., CSS parse errors).
     """
+    _ensure_macos_dylib_path()
     try:
         from weasyprint import HTML  # type: ignore
     except (ImportError, OSError) as e:

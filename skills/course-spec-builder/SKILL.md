@@ -158,3 +158,7 @@ The overlay files for non-thinkific platforms are stubs in Phase 2. They get fil
 - Phase 7: Visual Aids template's `microsims:` list now has a worked
   example with the seven supported template types and the
   `lesson` / `type` / `file` / `purpose` field convention.
+
+### 1.3 (2026-05-05)
+- Phase 11: Canvas overlay populated with full API notes, sync command,
+  platform risks, and prerequisites alongside the Thinkific overlay.

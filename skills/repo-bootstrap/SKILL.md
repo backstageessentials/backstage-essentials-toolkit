@@ -71,9 +71,9 @@ Do NOT run this skill if the course repo already has content. It is meant for fr
 7. Generate the file tree. Create files in this order so partial failures are recoverable:
    
    a. Top-level config files first:
-      - `course-config.yaml` (populated with course name, slug, platform, completion threshold, units count, and paths to course-description.md and voice-guide.md)
-      - `.gitignore` (with .env, .DS_Store, __pycache__, sync-state.json, .claude/settings.local.json, and editor cruft)
-      - `.env.example` (with placeholder values for the platform's required secrets, e.g., THINKIFIC_API_KEY for Thinkific)
+      - `course-config.yaml` (populated with course name, slug, platform, completion threshold, units count, and paths to course-description.md and voice-guide.md). When `target_platform` is `canvas`, also write a top-level `canvas_account_id` field under the `course:` block, defaulted to `1` with a comment instructing the user to replace it with the right Canvas account ID for their instance.
+      - `.gitignore` (with .env, .DS_Store, __pycache__, sync-state.json, sync-state.dry-run.json, .claude/settings.local.json, and editor cruft)
+      - `.env.example` (copy `templates/env-example/{target_platform}.env`. For Thinkific that is `THINKIFIC_API_KEY` and `THINKIFIC_SUBDOMAIN`. For Canvas that is `CANVAS_API_URL` and `CANVAS_API_TOKEN`. Each platform template carries the comments the user needs.)
       - `requirements.txt` (with pyyaml, requests, markdown-it-py for all platforms; add platform-specific libraries as needed)
       - `README.md` (with course name, one-paragraph summary from the description, link to docs/build-spec.md, and platform info)
 
@@ -177,6 +177,15 @@ THINKIFIC_SUBDOMAIN=your_subdomain_here
 
 The exact contents depend on the target platform. Each platform's required secrets are different.
 
+### .env.example (Canvas example)
+
+```
+CANVAS_API_URL=https://your-canvas-host
+CANVAS_API_TOKEN=your_api_token_here
+```
+
+For Canvas, also add `canvas_account_id: <id>` to course-config.yaml under the `course:` block. The validator refuses to sync a Canvas course without it.
+
 ### requirements.txt
 
 ```
@@ -244,7 +253,7 @@ Inputs:
 - unit_count: 8
 - unit_titles: ["What Geology Studies", "Minerals", "Rocks", "Plate Tectonics", "Earthquakes and Volcanoes", "Weathering and Erosion", "Earth's Resources", "Earth in the Solar System"]
 
-Outputs: A repo with eight unit folders, course-config.yaml configured for Canvas, .env.example with CANVAS_API_TOKEN and CANVAS_INSTANCE_URL.
+Outputs: A repo with eight unit folders, course-config.yaml configured for Canvas (including a `canvas_account_id` field placeholder for the user to fill in), .env.example with `CANVAS_API_URL` and `CANVAS_API_TOKEN`.
 
 ### Example 3: Sound mixing tutorial as static web
 
@@ -295,3 +304,11 @@ Outputs: A repo with four unit folders, course-config.yaml configured for static
 ### 1.0 (2026-05-03)
 - Initial version
 - Supports Thinkific platform fully; other platforms supported with generic .env.example
+
+### 1.1 (2026-05-05)
+- Phase 11: Canvas .env.example uses `CANVAS_API_URL` and `CANVAS_API_TOKEN`
+  (manual access token pattern). When `target_platform` is `canvas`, the
+  generated course-config.yaml also gets a `canvas_account_id` field with a
+  default of `1` and a comment pointing to the institution's Canvas admin.
+  sync-state.dry-run.json added to .gitignore so dry-run inspection files
+  stay out of git.

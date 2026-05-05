@@ -17,6 +17,7 @@ __pycache__/
 
 # Sync state (regenerated each run)
 sync-state.json
+sync-state.dry-run.json
 
 # Claude Code local config (machine specific)
 .claude/settings.local.json

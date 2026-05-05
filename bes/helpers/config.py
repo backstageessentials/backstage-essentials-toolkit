@@ -66,5 +66,17 @@ def load_config(course_root: Path = None) -> dict:
             f"course-config.yaml is missing required fields: {', '.join(missing)}"
         )
 
+    # Platform-specific required fields.
+    platform = course.get("platform")
+    if platform == "canvas":
+        if not course.get("canvas_account_id"):
+            raise ConfigError(
+                "course-config.yaml: platform 'canvas' requires a "
+                "'canvas_account_id' field under the 'course:' block. "
+                "On hosted Canvas the root account is usually 1; on an "
+                "institutional instance, ask your Canvas admin for the "
+                "sub-account ID you have rights to use."
+            )
+
     course["_root"] = str(course_root)
     return course

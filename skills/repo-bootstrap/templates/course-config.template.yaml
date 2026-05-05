@@ -12,3 +12,14 @@ course:
   price_usd: {PRICE_OR_NULL}
   duration_hours: {DURATION_OR_NULL}
   language: "{LANGUAGE_OR_DEFAULT}"
+
+  # Platform-specific fields. The repo-bootstrap skill writes only the keys
+  # that match the chosen platform, with a placeholder value for the user to
+  # fill in. Other keys stay commented out so the file remains self-explaining.
+  #
+  # Canvas:
+  #   canvas_account_id: 1   # The account ID under which to create the course.
+  #                          # On hosted Canvas the root account is 1.
+  #                          # On an institutional instance, ask your Canvas
+  #                          # admin which sub-account ID you have rights to.
+{PLATFORM_FIELDS}

@@ -1,8 +1,8 @@
 """Platform router.
 
 Reads the platform field from course-config.yaml and dispatches to the
-correct sync implementation. Right now only thinkific is wired up; the
-others raise NotImplementedError until Phase 4.
+correct sync implementation. thinkific (Phase 2) and canvas (Phase 11) are
+wired up; the others raise PlatformError until their phase ships.
 """
 
 
@@ -12,10 +12,10 @@ class PlatformError(Exception):
 
 SUPPORTED_PLATFORMS = {
     "thinkific": "implemented",
-    "canvas": "phase4",
-    "google-classroom": "phase4",
-    "static-web": "phase4",
-    "pdf": "phase4",
+    "canvas": "implemented",
+    "google-classroom": "deferred",
+    "static-web": "deferred",
+    "pdf": "deferred",
 }
 
 
@@ -30,14 +30,18 @@ def get_sync_function(platform: str):
         )
 
     status = SUPPORTED_PLATFORMS[platform]
-    if status == "phase4":
+    if status == "deferred":
         raise PlatformError(
             f"Platform '{platform}' is not yet implemented. "
-            f"Coming in Phase 4 of the toolkit. For now, only 'thinkific' works."
+            f"For now, 'thinkific' and 'canvas' are the supported sync targets."
         )
 
     if platform == "thinkific":
         from sync.thinkific.lib import sync
+        return sync
+
+    if platform == "canvas":
+        from sync.canvas.lib import sync
         return sync
 
     raise PlatformError(f"Internal error: no sync function for '{platform}'.")

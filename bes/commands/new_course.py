@@ -29,7 +29,7 @@ _TEMPLATE_PATH = (
 
 def run(course_name: str = None, target_platform: str = None,
         unit_count: int = 6, output_path: str = None,
-        target_audience: str = None) -> int:
+        target_audience: str = None, course_slug: str = None) -> int:
     """Run new-course command. Returns exit code."""
     if output_path is None:
         output_path = "."
@@ -51,8 +51,11 @@ def run(course_name: str = None, target_platform: str = None,
             default="To be filled in from course-description.md.",
         )
 
-    default_slug = course_name.lower().replace(" ", "-")
-    course_slug = click.prompt("Course slug", type=str, default=default_slug)
+    default_slug = _slugify(course_name)
+    if course_slug:
+        course_slug = _slugify(course_slug)
+    else:
+        course_slug = click.prompt("Course slug", type=str, default=default_slug)
 
     target = output_path / course_slug
     if target.exists() and any(target.iterdir()):
@@ -98,6 +101,10 @@ def run(course_name: str = None, target_platform: str = None,
     console.print("[yellow]running other bes commands.[/yellow]")
 
     return 0
+
+
+def _slugify(value: str) -> str:
+    return value.strip().lower().replace(" ", "-")
 
 
 def _write_course_claude_md(target: Path, course_name: str, course_slug: str,

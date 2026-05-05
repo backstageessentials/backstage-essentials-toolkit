@@ -113,62 +113,62 @@ final_assessment:
       difficulty: easy
       type: scenario
       lesson_ref: "01-introduction.md"
-      learning_outcome_ref: "Demonstrate professional conduct on a real show floor"
+      learning_outcome_ref: "Integrate sources without misrepresenting them"
       question: |
-        It is your first day on a crew. The senior tech is busy
-        and the rest of the crew is unloading a truck. What do you do?
+        Your draft borrows a striking eight-word phrase from a secondary
+        source. The phrase is not famous but the wording is what makes
+        it land. What do you do?
       choices:
-        - text: "Wait near the senior tech for instructions."
-          correct: false
-        - text: "Join the unloading crew and ask what to grab."
+        - text: "Quote the phrase verbatim with quotation marks and a citation."
           correct: true
-        - text: "Take a break until someone tells you to start."
+        - text: "Paraphrase the phrase in your own words and cite."
+          correct: false
+        - text: "Use the phrase as is; secondary sources do not need citation."
           correct: false
       explanation: |
-        Joining the working crew shows initiative and lets you
-        contribute immediately. The senior tech will pull you for
-        specific tasks when ready. Waiting passively wastes time.
-        Taking a break on day one signals you do not understand
-        the urgency of show prep.
+        When a source's exact wording is what gives a passage its force,
+        quote directly. Paraphrasing here would lose what made the phrase
+        worth citing. Skipping the citation entirely is plagiarism
+        regardless of whether the source is primary or secondary.
 
     - id: u3-q15
       unit: 3
       difficulty: hard
       type: applied-calculation
-      lesson_ref: "04-cable-runs.md"
-      learning_outcome_ref: "Trace an audio signal end to end"
+      lesson_ref: "04-titration.md"
+      learning_outcome_ref: "Apply stoichiometry to plan a procedure"
       question: |
-        A 4 ohm load is connected via 75 feet of 14 AWG cable.
-        Current is 5 amps. What is the approximate voltage drop?
+        A 2.0 mol/L stock solution of NaOH is on the bench. Your procedure
+        calls for 0.50 mol of NaOH. How many mL do you measure?
       choices:
-        - text: "0.5 volts"
+        - text: "100 mL"
           correct: false
-        - text: "1.9 volts"
+        - text: "250 mL"
           correct: true
-        - text: "3.8 volts"
+        - text: "500 mL"
           correct: false
-        - text: "7.6 volts"
+        - text: "1000 mL"
           correct: false
       explanation: |
-        14 AWG cable has approximately 0.0025 ohms per foot.
-        75 feet times 2 (round trip) is 150 feet, total resistance
-        0.375 ohms. Voltage drop equals current times resistance,
-        5 amps times 0.375 ohms equals about 1.9 volts.
+        Moles equals molarity times volume in liters. V = 0.50 mol /
+        2.0 mol/L = 0.25 L = 250 mL. The wrong answers come from
+        forgetting to convert L to mL, dividing the wrong way, or
+        swapping numerator and denominator.
 ```
 
 ## Examples
 
-### Example 1: Backstage Essentials, default settings
-
-Inputs: total_questions 200, distribution proportional, difficulty_mix default, scenario style.
-
-The course has 6 units. Proportional distribution might give: Unit 1: 35, Unit 2: 30, Unit 3: 40, Unit 4: 35, Unit 5: 35, Unit 6: 25 (total 200). Each unit gets a 30-50-20 difficulty mix. All scenario based.
-
-### Example 2: High school geology, mixed style
+### Example 1: High school geology, mixed style
 
 Inputs: total_questions 100, distribution equal, mixed style, "30 easy 50 medium 20 hard".
 
 The course has 8 units. Equal distribution: 12 or 13 questions per unit, totaling 100. Mix of scenario and recall. Difficulty mix applied per unit.
+
+### Example 2: Backstage Essentials live event course, default settings
+
+Inputs: total_questions 200, distribution proportional, difficulty_mix default, scenario style.
+
+The course has 6 units. Proportional distribution might give: Unit 1: 35, Unit 2: 30, Unit 3: 40, Unit 4: 35, Unit 5: 35, Unit 6: 25 (total 200). Each unit gets a 30-50-20 difficulty mix. All scenario based.
 
 ### Example 3: Coaching course, custom distribution
 

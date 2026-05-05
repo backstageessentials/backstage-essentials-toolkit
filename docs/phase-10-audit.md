@@ -117,6 +117,18 @@ These were addressed in the same commit because they cluster naturally with the 
 
 `skills/microsim-builder/microsim-patterns.md` had Best fits bullets that were trade leaning for every template. Each Best fits list now includes at least one humanities or science bullet (literary devices, historical figures, organelles, ethical frameworks, narrative arcs, population math, neural pathways, etc.).
 
+### Diagram Patterns: Branching Process canonical example (2026-05-05 follow-up)
+
+`skills/diagram-builder/diagram-patterns.md` led the Decision Tree pattern with a stagehand lifting example and framed "When it works" around adult trade training, troubleshooting, and compliance flows. Replaced the canonical example with a research-writing decision (quote vs. paraphrase vs. summarize), kept the lifting example as a second illustration, and broadened the "When it works" framing to span academic, scientific, analytical, classroom, and trade contexts. Same fix pattern as the audit's original Class Diagram and Linear Pipeline canonicalization.
+
+### Quiz scenario / applied-calculation worked examples (2026-05-05 follow-up)
+
+`skills/quiz-builder/SKILL.md` and `skills/quiz-builder/question-patterns.md` had only trade worked examples for the scenario and applied-calculation patterns; the comparative pattern had been paired in the original audit but the other two had not. Added a "Same Pattern, Humanities Subject" worked example to Scenario (research-writing source-integration choice) and a "Same Pattern, Science Subject" worked example to Applied Calculation (chemistry molarity). Rebalanced the headline assessment_style descriptions in `quiz-builder/SKILL.md` to lead with mixed examples instead of trade-only. Rebalanced the "When it works" / "When it doesn't" lists for Scenario and Recall so they no longer privilege trade or disparage K-12.
+
+### Final Assessment Builder Output Format example (2026-05-05 follow-up)
+
+`skills/final-assessment-builder/SKILL.md` showed two trade-only worked output questions in its Output Format block (a load-in scenario plus a cable voltage-drop calculation). Since Output Format is the first concrete picture a reader gets of the skill's output, the trade bias here was disproportionate to the Examples section's actual subject mix. Replaced the worked examples with a humanities scenario (source integration) and a chemistry applied-calculation (NaOH molarity), and reordered the Examples section so high school geology leads as Example 1 with the Backstage Essentials course as Example 2.
+
 ## Open Items
 
 These low-severity findings were left unchanged in this commit because they sit alongside paired non-trade examples already and cosmetic fixes would not change behavior:

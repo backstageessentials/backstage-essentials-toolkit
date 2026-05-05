@@ -15,7 +15,21 @@ When in doubt, flowchart. It is the most general and renders cleanly under the b
 
 Use when the lesson describes a process where the next step depends on a question about the current state.
 
-Example, from a lifting lesson:
+Example, from a research-writing lesson on integrating a source:
+
+```mermaid
+flowchart TD
+    A[Source supports your claim] --> B{Wording is<br/>distinctive or famous?}
+    B -->|Yes| C[Quote directly.<br/>Cite verbatim.]
+    B -->|No| D{Whole passage<br/>matters for context?}
+    D -->|Yes| E[Summarize in<br/>one or two sentences.]
+    D -->|No| F[Paraphrase.<br/>Reword fully.]
+    C --> G[Add citation]
+    E --> G
+    F --> G
+```
+
+A second example, from a lifting lesson in a stagehand training course, applies the same shape to a workplace decision:
 
 ```mermaid
 flowchart TD
@@ -30,9 +44,9 @@ flowchart TD
 ```
 
 When it works:
-- Adult trade training, real job decisions ("what do you do?")
-- Troubleshooting flows in technical courses
-- Compliance flows ("when do I escalate?")
+- Decisions a learner has to make in real time (research-writing choices, classroom management calls, real job decisions)
+- Troubleshooting flows in technical, scientific, or analytical courses
+- Compliance, escalation, and policy flows ("when do I escalate?", "when do I cite?")
 
 When it does not:
 - A linear list of steps with no decisions (use a numbered list, not a diagram)

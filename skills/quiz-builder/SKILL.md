@@ -56,9 +56,9 @@ Use this skill before sync. Knowledge check files start as empty placeholders fr
    - **lesson_ref:** which lesson the question is based on (helps with debugging and revision)
 
 6. Apply the assessment_style:
-   - **scenario:** every question is a realistic situation the student might face. "You arrive at load-in and see X. What do you do?"
-   - **recall:** straight knowledge check. "What is the Mohs hardness of quartz?"
-   - **applied-calculation:** numerical answer. "If a speaker is 100 watts and the cable run is 50 feet, what gauge wire do you use?"
+   - **scenario:** every question is a realistic situation the student might face. The shape stays the same across subjects; only the situation changes. A research-writing course might ask "Your source's wording is distinctive but only the gist matters for your point. Quote, paraphrase, or summarize?"; a stagehand course might ask "You arrive at load-in and see X. What do you do?"
+   - **recall:** straight knowledge check. "What is the Mohs hardness of quartz?" or "Which amendment guarantees freedom of the press?"
+   - **applied-calculation:** numerical answer. "A 2.0 mol/L solution needs 0.50 mol of solute. How many mL do you measure?" or "If a speaker is 100 watts and the cable run is 50 feet, what gauge wire do you use?"
    - **mixed:** roughly half scenario, with the rest split between recall and applied-calculation
 
 7. Apply the difficulty_mix:

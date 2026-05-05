@@ -31,13 +31,45 @@ The student is dropped into a realistic situation and must choose what to do.
 ```
 
 When it works:
-- Adult trade training, real job situations
-- Coaching, decision-making under pressure
+- Decision-making under realistic constraints (job sites, classrooms, clinical settings, source-integration calls)
+- Coaching, judgment under pressure
 - Any course where applied judgment is the outcome
 
 When it doesn't:
 - Pure factual recall (use recall pattern instead)
 - Mathematical computation (use applied-calculation pattern instead)
+
+### Same Pattern, Humanities Subject
+
+The scenario shape works for non-trade courses too. A research-writing course uses the same template:
+
+```yaml
+- id: u2-kc-03
+  type: scenario
+  difficulty: medium
+  question: |
+    You are drafting an essay and find a paragraph from a secondary source
+    that says exactly what you want to argue, in better words than you
+    would write yourself. The wording is striking but not famous. What do
+    you do?
+  choices:
+    - text: "Quote the paragraph directly with quotation marks and a citation."
+      correct: true
+    - text: "Paraphrase the paragraph in your own words and cite the source."
+      correct: false
+    - text: "Use the paragraph as is. Citation is optional for secondary sources."
+      correct: false
+    - text: "Drop the paragraph; using anyone else's wording weakens your essay."
+      correct: false
+  explanation: |
+    When the source's wording is distinctive enough that paraphrasing would
+    lose the force of the language, quote directly. Use quotation marks and
+    cite. Paraphrasing is the right move when only the gist matters; here
+    the wording is part of the value. Using the wording without citation is
+    plagiarism regardless of whether the source is primary or secondary.
+    Dropping evidence that supports your argument because someone else
+    wrote it well is the wrong instinct.
+```
 
 ## Recall Question
 
@@ -64,13 +96,13 @@ Tests whether the student remembers a specific fact, definition, or value.
 ```
 
 When it works:
-- High school courses with curriculum-driven facts
-- Reference material where the student must memorize specific values
-- Vocabulary or terminology checks
+- Curriculum-driven facts at any level (K-12 minerals, undergraduate constitutional amendments, language vocabulary, anatomy terminology)
+- Reference material the student must memorize for downstream use
+- Vocabulary or terminology checks where naming the thing precisely is the point
 
 When it doesn't:
-- Adult professional training (recall is rarely the goal there)
-- Subjects where context matters more than specific values
+- Subjects where context decides the answer more than the value itself does
+- Skills built by judgment rather than memorization (use scenario or comparative)
 
 ## Applied Calculation
 
@@ -102,13 +134,43 @@ Student computes a specific numerical answer.
 ```
 
 When it works:
-- Engineering, audio engineering, electrical work
+- Sciences (chemistry, physics, biology) where quantitative reasoning is the skill
+- Engineering and trade calculations (cable gauge, structural load, dosage)
+- Math, statistics, finance, economics
 - Any course with quantitative judgment
-- Scientific reasoning courses
 
 When it doesn't:
 - Soft skills, communication, professionalism
-- Courses where the student's tools include calculators or reference cards
+- Courses where the student's tools include calculators or reference cards and the answer falls out without reasoning
+
+### Same Pattern, Science Subject
+
+The applied-calculation shape is not specific to engineering. A chemistry course uses the same template:
+
+```yaml
+- id: u3-kc-04
+  type: applied-calculation
+  difficulty: medium
+  question: |
+    A 2.0 mol/L stock solution of NaOH is on the bench. Your procedure
+    calls for 0.50 mol of NaOH. How many mL of stock do you measure?
+  choices:
+    - text: "100 mL"
+      correct: false
+    - text: "250 mL"
+      correct: true
+    - text: "500 mL"
+      correct: false
+    - text: "1000 mL"
+      correct: false
+  explanation: |
+    Moles equals molarity times volume in liters. Solve for volume:
+    V = 0.50 mol / 2.0 mol/L = 0.25 L, which is 250 mL. The other
+    options come from common arithmetic errors: forgetting to convert
+    L to mL, dividing the wrong way, or swapping the numerator and
+    denominator. The skill the question tests is not the formula
+    itself but the dimensional check at the end.
+```
 
 ## Comparative Question
 

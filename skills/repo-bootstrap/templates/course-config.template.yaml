@@ -24,6 +24,31 @@ course:
   #   3. Otherwise the toolkit default ("study") wins.
   # knowledge_check_mode: "study"
 
+  # Phase 18 visual polish fields (all optional). The static-web target
+  # picks up these to style the rendered course. Courses that omit them
+  # render with the toolkit's default magenta gradient hero, no logo,
+  # and the brand magenta as the only accent.
+  #
+  # cover_image_url: "https://example.com/hero.jpg"
+  #   URL or path to a hero cover image. Layered under the magenta
+  #   gradient overlay so white headline text stays legible. Recommended
+  #   max ~200 KB compressed; large photos slow first paint.
+  #
+  # logo_url: "https://example.com/logo.svg"
+  #   URL or path to a small logo image shown in the branded footer.
+  #
+  # brand_secondary_color: "#00A3B5"
+  #   Optional secondary accent color used on every fourth unit-card
+  #   stripe and in a few other accents. Hex string. Defaults to a
+  #   teal that complements the brand magenta.
+  #
+  # author_credit: "Backstage Essentials LLC"
+  #   Shown in the footer next to the course name. Override if you are
+  #   publishing under a different organization name.
+  #
+  # license_text: "CC BY-NC-SA 4.0"
+  #   Optional license string shown at the bottom of the footer.
+
   # Platform-specific fields. The repo-bootstrap skill writes only the keys
   # that match the chosen platform, with a placeholder value for the user to
   # fill in. Other keys stay commented out so the file remains self-explaining.

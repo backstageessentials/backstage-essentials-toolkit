@@ -80,6 +80,36 @@ def load_config(course_root: Path = None) -> dict:
                 f"or 'test', got {kc_mode_raw!r}."
             )
 
+    # Phase 18 visual polish fields. All optional. The static-web target
+    # uses graceful defaults for courses that do not set them: a
+    # gradient-only hero (no cover photo), no footer logo, the toolkit's
+    # brand magenta as the only accent.
+    cover_url = course.get("cover_image_url")
+    if cover_url is not None and not isinstance(cover_url, str):
+        raise ConfigError(
+            "course-config.yaml: cover_image_url must be a string URL or path."
+        )
+    logo_url = course.get("logo_url")
+    if logo_url is not None and not isinstance(logo_url, str):
+        raise ConfigError(
+            "course-config.yaml: logo_url must be a string URL or path."
+        )
+    secondary = course.get("brand_secondary_color")
+    if secondary is not None:
+        if not isinstance(secondary, str):
+            raise ConfigError(
+                "course-config.yaml: brand_secondary_color must be a CSS "
+                "color string (e.g., '#00A3B5')."
+            )
+        # Loose hex check; CSS named colors and rgb() are also fine but
+        # we just sanity-check shape so a typo like "magenta?" gets caught.
+        s = secondary.strip()
+        if s.startswith("#") and len(s) not in (4, 7, 9):
+            raise ConfigError(
+                f"course-config.yaml: brand_secondary_color hex form must "
+                f"be #RGB, #RRGGBB, or #RRGGBBAA, got {secondary!r}."
+            )
+
     # Platform-specific required fields and defaults.
     platform = course.get("platform")
     if platform == "canvas":

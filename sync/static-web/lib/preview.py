@@ -845,7 +845,8 @@ def render_test_section(quiz_data: dict, section_id: str = "course-final-test",
                          heading: str = "Final Assessment",
                          intro: Optional[str] = None,
                          course_slug: str = "",
-                         simple_mode: bool = False) -> str:
+                         simple_mode: bool = False,
+                         unit_number: Optional[int] = None) -> str:
     """Return the HTML for a test-mode quiz section.
 
     quiz_data is the inner dict from the YAML (the value under final_assessment:
@@ -960,9 +961,13 @@ def render_test_section(quiz_data: dict, section_id: str = "course-final-test",
 
     storage_key = f"course-{course_slug}-final-attempts" if course_slug else ""
     if simple_mode:
-        # KCs do not persist attempts. Each load is fresh; refresh to retry.
-        persist = False
-        storage_key = ""
+        if course_slug and unit_number is not None:
+            # Unit KC: persist attempts so course-gating can read pass state.
+            storage_key = f"course-{course_slug}-unit-{unit_number}-kc-attempts"
+            persist = True
+        else:
+            persist = False
+            storage_key = ""
 
     return (
         f'<section class="test-section" id="{_esc(section_id)}" '
@@ -1109,6 +1114,7 @@ def render_unit_preview(unit_folder: Path, course_root: Optional[Path] = None) -
                 heading=unit.knowledge_check_title,
                 course_slug=course_meta.course_slug,
                 simple_mode=True,
+                unit_number=unit.number,
             )
             kc_html = (
                 '<section class="kc fade-in" id="kc">\n'

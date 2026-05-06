@@ -371,15 +371,19 @@ PROGRESS_AND_ANIMATION_JS = """
     );
     if (link) link.classList.add('viewed');
   });
-  // Mark current unit's lessons as viewed when scrolled into view.
+  // Mark current unit's lessons as viewed when scrolled into view. Using a
+  // rootMargin that shrinks the bottom of the viewport by 40% means a lesson
+  // counts as viewed as soon as any part of it crosses into the top 60% of
+  // the screen. That fires reliably regardless of how tall the article is
+  // versus the viewport, which a fixed intersectionRatio threshold cannot.
   if ('IntersectionObserver' in window) {
     var lessonObserver = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
-        if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
+        if (entry.isIntersecting) {
           markViewed(entry.target.id);
         }
       });
-    }, { threshold: 0.3 });
+    }, { threshold: 0, rootMargin: '0px 0px -40% 0px' });
     document.querySelectorAll('article.lesson-card[id]').forEach(function (el) {
       lessonObserver.observe(el);
     });

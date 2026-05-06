@@ -1057,13 +1057,16 @@ def render_unit_preview(unit_folder: Path, course_root: Optional[Path] = None) -
     has_final = final_data is not None
     md = _make_md()
 
-    # Lesson nav for sidebar.
+    # Lesson nav for sidebar. Anchor and lesson_id share the same value so the
+    # gating script (which reads article ids from rendered HTML) and the
+    # sidebar's data-lesson-id stay aligned, and so lesson identifiers are
+    # unique across units.
     current_unit_lessons = []
     for i, lesson in enumerate(unit.lessons, 1):
         current_unit_lessons.append({
             "index": i,
             "title": lesson.title,
-            "anchor": f"lesson-{i}",
+            "anchor": f"u{unit.number}-l{i}",
             "lesson_id": f"u{unit.number}-l{i}",
         })
 
@@ -1089,7 +1092,7 @@ def render_unit_preview(unit_folder: Path, course_root: Optional[Path] = None) -
     for i, lesson in enumerate(unit.lessons, 1):
         expanded = _expand_microsim_directives(lesson.body_markdown, unit.number)
         body_html = _render_with_mermaid(md, expanded, demote_headings=True)
-        anchor = f"lesson-{i}"
+        anchor = f"u{unit.number}-l{i}"
         lesson_cards.append(
             render_lesson_card(
                 unit_number=unit.number,
